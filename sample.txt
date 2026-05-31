@@ -1,0 +1,124 @@
+AI-Powered Supply Chain Risk Intelligence Assistant
+Overview
+Global supply chains involve suppliers, warehouses, transportation networks, inventory systems, and logistics operations that continuously generate operational data. Organizations often face challenges such as supplier delays, shipment disruptions, inventory shortages, transportation bottlenecks, and unexpected demand fluctuations.
+Supply chain managers frequently spend significant time analyzing operational risks because information is distributed across procurement systems, shipment records, warehouse data, vendor reports, and logistics platforms.
+Managers frequently investigate situations such as:
+"Supplier delivery delays are increasing for critical components." 
+"Port congestion is impacting shipment schedules." 
+"Warehouse inventory is approaching stockout levels." 
+"Transportation costs increased unexpectedly across specific regions." 
+"Demand spikes are causing fulfillment bottlenecks." 
+Traditional monitoring systems rely heavily on threshold alerts and manual analysis, making proactive risk management difficult.
+The system should help operations teams retrieve historical supply chain incidents, identify emerging risks, recommend mitigation strategies, and generate explainable operational intelligence.
+
+Objective
+The objective of this project is to build an AI-powered supply chain risk intelligence assistant that enables operations teams to investigate supply chain disruptions using natural-language queries and intelligent risk analysis.
+The system should retrieve historical operational incidents, correlate logistics signals, detect supply chain anomalies, and generate explainable risk insights to improve operational resilience and business continuity.
+
+Key Capabilities
+Natural Language Supply Chain Queries
+Operations teams can describe supply chain problems conversationally.
+Semantic Incident Retrieval
+Retrieve historical logistics disruptions based on conceptual similarity.
+Supplier Risk Analysis
+Identify supplier performance degradation and delivery risks.
+Inventory Intelligence
+Analyze stock levels and predict inventory shortages.
+Shipment Delay Prediction
+Estimate shipment disruptions using historical trends.
+Supply Chain Knowledge Summarization
+Generate summaries of operational bottlenecks and logistics issues.
+Explainable Recommendations
+Provide transparent mitigation recommendations.
+Multi-System Understanding
+Support procurement systems, warehouse operations, transportation management systems, and vendor ecosystems.
+
+Requirement 1 (Basic)
+Basic RAG for supply chain incident retrieval 
+Hybrid search (keyword + semantic) 
+Supply chain semantic search 
+Metadata filtering (supplier, warehouse, shipment status, severity) 
+Basic risk recommendation engine 
+Input validation guardrails 
+Incident similarity ranking 
+Operational recommendation generation 
+Expose the core functionality through API endpoints so users or other applications can interact with the system.
+
+Requirement 2 (Advanced)
+DeepEval for recommendation quality evaluation 
+Supply chain anomaly correlation analysis 
+Reranking using logistics embeddings 
+LLM-as-judge for mitigation validation 
+Token optimization for large-scale operational data 
+Multi-Agent Supply Chain System
+Supplier Risk Agent 
+Shipment Analysis Agent 
+Inventory Intelligence Agent 
+Recommendation Agent 
+-Proactive supply chain disruption intelligence
+-Supply chain analytics dashboard
+-Agent-to-Agent (A2A) communication for escalation workflows
+Build a simple front-end interface to demonstrate how an end user can interact with the system.
+
+Additional Capabilities (Optional)
+Supplier performance monitoring 
+Demand forecasting intelligence 
+Inventory stockout prediction 
+Logistics bottleneck detection 
+Cross-region disruption analysis 
+Feedback loop for operational optimization 
+Real-time supply chain analytics dashboard 
+ERP integration support 
+
+Deliverables
+1. Architecture Diagram
+Include a high-level view showing:
+logistics data ingestion pipeline 
+operational event processing 
+document chunking and embedding generation 
+hybrid retrieval layer 
+multi-agent risk analysis pipeline 
+recommendation generation 
+
+2. Design
+Explain system design decisions and trade-offs such as:
+vector database selection 
+chunking strategy for logistics records 
+hybrid search vs semantic-only retrieval 
+agent orchestration architecture 
+anomaly detection strategy 
+operational reliability guardrails 
+
+3. Full Executable Code (Microservice)
+Focus on modularity and clarity.
+Provide a README explaining:
+Project setup 
+Supply chain data ingestion process 
+Sample operational query 
+Example mitigation recommendation 
+API usage examples 
+
+4. Panel Presentation (10 Minutes)
+Demo Flow
+Operations manager enters disruption query 
+System retrieves related historical incidents 
+Multi-agent analysis identifies operational risks 
+System generates explainable mitigation guidance 
+Q&A with panel (2 minutes)
+
+Dataset Name
+Supply Chain Logistics Dataset: supply_chain_data.csv
+Primary Link
+Supply Chain Logistics Dataset
+
+Alternative Links
+DataCo Smart Supply Chain Dataset 
+M5 Forecasting Dataset 
+Format
+CSV
+
+Key Fields
+supplier_id, inventory_level, shipment_status, warehouse_location, delivery_delay, transportation_cost, order_quantity, demand_forecast, timestamp
+
+Reason
+Supply chain operational datasets containing supplier information, inventory movement, shipment status, logistics delays, and demand forecasting signals suitable for semantic retrieval, operational intelligence, disruption analysis, anomaly detection, predictive risk modeling, and AI-powered supply chain optimization systems.

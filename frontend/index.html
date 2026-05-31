@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supply Chain Risk Intelligence Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">SC<strong>Risk</strong>AI</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="tab active" data-tab="search">Search</button>
+        <button class="tab" data-tab="recommend">Recommendations</button>
+        <button class="tab" data-tab="agents">Multi-Agent</button>
+        <button class="tab" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="anomalies">Anomalies</button>
+      </nav>
+      <div class="health-badge" id="healthBadge">
+        <span class="dot"></span> Connecting…
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── SEARCH TAB ─────────────────────────────────────────────────── -->
+    <section class="tab-content active" id="tab-search">
+      <div class="panel">
+        <h2>Incident Search</h2>
+        <p class="subtitle">Search historical supply chain incidents using natural language</p>
+        <div class="search-row">
+          <input id="searchQuery" class="text-input" type="text"
+            placeholder="e.g. supplier delivery delays for critical components…" />
+          <button class="btn primary" onclick="doSearch()">Search</button>
+        </div>
+        <div class="filter-row">
+          <select id="fSeverity" class="select"><option value="">All Severities</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+          <select id="fStatus" class="select"><option value="">All Statuses</option><option>On-Time</option><option>Delayed</option><option>Critical Delay</option><option>In-Transit</option><option>Delivered</option></select>
+          <input id="fSupplier" class="text-input sm" type="text" placeholder="Supplier ID (e.g. S001)" />
+          <label class="toggle-label"><input id="useHybrid" type="checkbox" checked /> Hybrid Search</label>
+        </div>
+        <div id="searchResults" class="results-area"></div>
+      </div>
+    </section>
+
+    <!-- ── RECOMMENDATIONS TAB ────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-recommend">
+      <div class="panel">
+        <h2>Risk Recommendations</h2>
+        <p class="subtitle">AI-generated mitigation strategies with risk assessment</p>
+        <div class="search-row">
+          <input id="recQuery" class="text-input" type="text"
+            placeholder="e.g. port congestion is impacting shipment schedules…" />
+          <button class="btn primary" onclick="doRecommend()">Analyze</button>
+        </div>
+        <div class="filter-row">
+          <select id="recSeverity" class="select"><option value="">Any Severity</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+          <label class="toggle-label"><input id="evalQuality" type="checkbox" /> LLM Judge Evaluation</label>
+        </div>
+        <div id="recResults" class="results-area"></div>
+      </div>
+    </section>
+
+    <!-- ── MULTI-AGENT TAB ────────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-agents">
+      <div class="panel">
+        <h2>Multi-Agent Analysis</h2>
+        <p class="subtitle">Parallel Supplier Risk · Shipment · Inventory · Recommendation agents with A2A escalation</p>
+        <div class="search-row">
+          <input id="agentQuery" class="text-input" type="text"
+            placeholder="e.g. warehouse inventory approaching stockout and supplier delays increasing…" />
+          <button class="btn primary" onclick="doAgentAnalysis()">Run Agents</button>
+        </div>
+        <div class="filter-row">
+          <input id="agentSupplier" class="text-input sm" type="text" placeholder="Supplier ID (optional)" />
+          <input id="agentWarehouse" class="text-input sm" type="text" placeholder="Warehouse (optional)" />
+          <label class="toggle-label"><input id="allAgents" type="checkbox" checked /> All Agents</label>
+        </div>
+        <div id="agentResults" class="results-area"></div>
+      </div>
+    </section>
+
+    <!-- ── DASHBOARD TAB ──────────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-dashboard">
+      <div class="panel">
+        <h2>Analytics Dashboard</h2>
+        <p class="subtitle">Aggregated supply chain metrics</p>
+        <button class="btn secondary" onclick="loadDashboard()">Refresh</button>
+        <div id="dashboardContent" class="results-area"></div>
+      </div>
+    </section>
+
+    <!-- ── ANOMALIES TAB ──────────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-anomalies">
+      <div class="panel">
+        <h2>Anomaly Detection</h2>
+        <p class="subtitle">IsolationForest anomaly detection with correlation analysis</p>
+        <div class="filter-row">
+          <label>Contamination Rate:
+            <input id="contamination" class="text-input sm" type="number" value="0.05" min="0.01" max="0.5" step="0.01" />
+          </label>
+          <button class="btn secondary" onclick="loadAnomalies()">Detect Anomalies</button>
+        </div>
+        <div id="anomalyContent" class="results-area"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="spinner" class="spinner hidden">
+    <div class="spinner-ring"></div>
+    <p>Analyzing…</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
