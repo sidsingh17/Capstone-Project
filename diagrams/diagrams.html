@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SC Risk AI — Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+      --border: #2e3250; --accent: #4f7fff; --accent2: #7c5cfc;
+      --success: #34d399; --warning: #fbbf24; --danger: #f87171;
+      --text: #e2e8f0; --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-size: 18px; font-weight: 800; color: var(--accent); }
+    .subtitle { font-size: 13px; color: var(--muted); }
+
+    nav { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .nav-btn {
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 12px;
+      font-weight: 600; transition: all .15s; white-space: nowrap;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    main { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+    .diagram-section { display: none; }
+    .diagram-section.active { display: block; }
+
+    .section-header { margin-bottom: 24px; }
+    .section-header h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .section-header p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; margin-right: 6px; margin-bottom: 4px;
+    }
+    .badge-seq { background: rgba(79,127,255,.15); color: var(--accent); border: 1px solid rgba(79,127,255,.3); }
+    .badge-flow { background: rgba(124,92,252,.15); color: var(--accent2); border: 1px solid rgba(124,92,252,.3); }
+
+    .diagram-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px; margin-bottom: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    }
+    .diagram-card h3 {
+      font-size: 16px; font-weight: 700; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .diagram-card .desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+    .mermaid-wrap {
+      background: #fff; border-radius: 8px; padding: 24px;
+      overflow-x: auto; min-height: 120px;
+    }
+    .mermaid svg { max-width: 100%; height: auto; }
+
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;
+      padding-top: 16px; border-top: 1px solid var(--border);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Overview grid */
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px; margin-bottom: 32px;
+    }
+    .overview-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 18px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .overview-card:hover { border-color: var(--accent); }
+    .overview-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .overview-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .overview-card .num { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 6px; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">⬡ SCRiskAI — System Diagrams</div>
+    <div class="subtitle">AI-Powered Supply Chain Risk Intelligence Assistant</div>
+  </div>
+  <nav>
+    <button class="nav-btn active" onclick="show('overview')">Overview</button>
+    <button class="nav-btn" onclick="show('seq1')">RAG Search</button>
+    <button class="nav-btn" onclick="show('seq2')">Recommendations</button>
+    <button class="nav-btn" onclick="show('seq3')">Multi-Agent</button>
+    <button class="nav-btn" onclick="show('seq4')">Ingestion</button>
+    <button class="nav-btn" onclick="show('flow1')">Architecture</button>
+    <button class="nav-btn" onclick="show('flow2')">Hybrid Search</button>
+    <button class="nav-btn" onclick="show('flow3')">Risk Scoring</button>
+    <button class="nav-btn" onclick="show('flow4')">Agent A2A</button>
+    <button class="nav-btn" onclick="show('flow5')">Anomaly Detection</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ── OVERVIEW ─────────────────────────────────────────────────────────── -->
+<section class="diagram-section active" id="sec-overview">
+  <div class="section-header">
+    <h2>System Diagrams</h2>
+    <p>9 diagrams covering all major flows — 4 sequence diagrams and 5 flowcharts.</p>
+  </div>
+  <div class="overview-grid">
+    <div class="overview-card" onclick="show('seq1')">
+      <div class="num">01</div>
+      <span class="badge badge-seq">Sequence</span>
+      <h4>RAG Search Flow</h4>
+      <p>Query validation → parallel BM25 + semantic retrieval → RRF fusion → logistics reranking → results.</p>
+    </div>
+    <div class="overview-card" onclick="show('seq2')">
+      <div class="num">02</div>
+      <span class="badge badge-seq">Sequence</span>
+      <h4>Recommendation Generation</h4>
+      <p>Hybrid search → token budgeting → risk scoring → GPT-4o generation → optional LLM judge evaluation.</p>
+    </div>
+    <div class="overview-card" onclick="show('seq3')">
+      <div class="num">03</div>
+      <span class="badge badge-seq">Sequence</span>
+      <h4>Multi-Agent Orchestration</h4>
+      <p>Parallel agent execution → A2A escalation → recommendation synthesis → proactive alerts.</p>
+    </div>
+    <div class="overview-card" onclick="show('seq4')">
+      <div class="num">04</div>
+      <span class="badge badge-seq">Sequence</span>
+      <h4>Data Ingestion Pipeline</h4>
+      <p>CSV load → preprocessing → chunking → batched embedding → vector store upsert → BM25 index build.</p>
+    </div>
+    <div class="overview-card" onclick="show('flow1')">
+      <div class="num">05</div>
+      <span class="badge badge-flow">Flowchart</span>
+      <h4>Complete System Architecture</h4>
+      <p>All layers: Frontend → API → Guardrails → Core Services → Agents → LLM → Data.</p>
+    </div>
+    <div class="overview-card" onclick="show('flow2')">
+      <div class="num">06</div>
+      <span class="badge badge-flow">Flowchart</span>
+      <h4>Hybrid Search Decision Flow</h4>
+      <p>BM25 + semantic parallel retrieval → RRF scoring formula → metadata filter → domain reranker.</p>
+    </div>
+    <div class="overview-card" onclick="show('flow3')">
+      <div class="num">07</div>
+      <span class="badge badge-flow">Flowchart</span>
+      <h4>Risk Scoring Logic</h4>
+      <p>4-dimension scoring (supplier 35%, inventory 30%, shipment 25%, demand 10%) → severity multiplier → level.</p>
+    </div>
+    <div class="overview-card" onclick="show('flow4')">
+      <div class="num">08</div>
+      <span class="badge badge-flow">Flowchart</span>
+      <h4>Multi-Agent A2A Escalation</h4>
+      <p>Agent selection → parallel pool → error isolation → A2A escalation chain → synthesis → consolidation.</p>
+    </div>
+    <div class="overview-card" onclick="show('flow5')">
+      <div class="num">09</div>
+      <span class="badge badge-flow">Flowchart</span>
+      <h4>Anomaly Detection Pipeline</h4>
+      <p>Feature extraction → StandardScaler → IsolationForest → Z-score attribution → correlation analysis.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── SEQ 1: RAG SEARCH ─────────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-seq1">
+  <div class="section-header">
+    <h2><span class="badge badge-seq">Sequence Diagram 1</span> RAG Search Flow</h2>
+    <p>Shows the complete lifecycle of a natural language search query — from user input through validation, parallel BM25 + semantic retrieval, Reciprocal Rank Fusion, and logistics-aware reranking.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Query → Validate → Parallel Retrieve → Fuse → Rerank → Respond</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor U as Operations Manager
+    participant FE as Frontend (SPA)
+    participant API as FastAPI /search
+    participant GR as Guardrails
+    participant HS as HybridSearchEngine
+    participant BM as BM25 Index
+    participant VS as VectorStore
+    participant EM as EmbeddingModel
+
+    U->>FE: Enter natural language query
+    FE->>API: POST /api/v1/search {query, filters, top_k}
+    API->>GR: validate_query(query)
+    GR-->>API: valid / 400 Bad Request
+
+    API->>EM: encode_single(query)
+    EM-->>API: query_embedding [384-dim]
+
+    par Parallel Retrieval
+        API->>BM: get_scores(tokenized_query)
+        BM-->>API: bm25_scores[]
+    and
+        API->>VS: query(query_embedding, where_filter)
+        VS-->>API: semantic_results[]
+    end
+
+    API->>HS: RRF fusion (alpha=0.5, k=60)
+    HS-->>API: merged_ranked_results[]
+
+    API->>HS: rerank(query, results, top_k)
+    Note over HS: Domain boost for exact field matches
+    HS-->>API: reranked_results[]
+
+    API-->>FE: SearchResponse {results, latency_ms, method}
+    FE-->>U: Display ranked incident cards
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4f7fff"></div> API Layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Parallel steps</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Fusion/Ranking</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SEQ 2: RECOMMENDATIONS ────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-seq2">
+  <div class="section-header">
+    <h2><span class="badge badge-seq">Sequence Diagram 2</span> Recommendation Generation Flow</h2>
+    <p>Covers the full RAG pipeline: search retrieval → token budget management → multi-dimensional risk scoring → GPT-4o generation with structured prompt → optional LLM-as-judge evaluation.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Search → Token Budget → Risk Score → GPT-4o → Parse → Evaluate</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor U as Operations Manager
+    participant FE as Frontend
+    participant API as FastAPI /recommendations
+    participant GR as Guardrails
+    participant HS as HybridSearch
+    participant TC as TokenOptimizer
+    participant RK as RiskScoring
+    participant LLM as OpenAI GPT-4o
+    participant EV as EvaluationService
+
+    U->>FE: Submit disruption query
+    FE->>API: POST /recommendations {query, evaluate_quality}
+    API->>GR: validate_query() + is_supply_chain_relevant()
+    GR-->>API: sanitized query
+
+    API->>HS: hybrid_search(query, top_k=16)
+    HS-->>API: top 8 candidate incidents
+
+    API->>TC: truncate_context(docs, max_tokens=8000)
+    Note over TC: tiktoken counts each doc, stops when budget exhausted
+    TC-->>API: trimmed_docs[]
+
+    API->>RK: compute_risk_score(trimmed_docs)
+    Note over RK: supplier 35% + inventory 30% + shipment 25% + demand 10%
+    RK-->>API: RiskScore {overall, level, factors}
+
+    API->>LLM: chat.completions.create() system+context+query+risk
+    LLM-->>API: raw_text (PRIORITY 1-5 structured output)
+
+    API->>API: _parse_recommendations(raw_text)
+    Note over API: Regex extracts PRIORITY / Timeline / Owner / Impact
+
+    opt evaluate_quality=true
+        API->>EV: llm_judge_recommendations(query, response, context)
+        EV->>LLM: Judge prompt (5 scoring dimensions)
+        LLM-->>EV: scores + APPROVED/REJECTED verdict
+        EV-->>API: {overall_score, verdict, feedback}
+    end
+
+    API-->>FE: RecommendationResponse {risk, recs, summary, judge_score}
+    FE-->>U: Display risk bars and mitigation steps
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SEQ 3: MULTI-AGENT ─────────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-seq3">
+  <div class="section-header">
+    <h2><span class="badge badge-seq">Sequence Diagram 3</span> Multi-Agent Orchestration with A2A Escalation</h2>
+    <p>Three specialist agents run in parallel via ThreadPoolExecutor. If any agent's risk score exceeds 0.7, it triggers A2A escalation. The Recommendation Agent synthesizes all findings into a consolidated strategy.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Parallel Agents → A2A Escalation → Synthesis → Consolidated Response</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor U as Operations Manager
+    participant FE as Frontend
+    participant OR as Orchestrator
+    participant TP as ThreadPoolExecutor
+    participant SA as SupplierRiskAgent
+    participant SH as ShipmentAnalysisAgent
+    participant IN as InventoryIntelAgent
+    participant LLM as OpenAI GPT-4o
+    participant RA as RecommendationAgent
+
+    U->>FE: Submit complex risk query
+    FE->>OR: POST /agents/analyze {query, supplier_id}
+    OR->>OR: validate + sanitize + route agents
+
+    OR->>OR: hybrid_search(top_k=10) for context
+
+    OR->>TP: submit all 3 agents concurrently
+
+    par Parallel Execution (max_workers=3)
+        TP->>SA: analyze(query, context)
+        SA->>LLM: call + tool: get_supplier_history()
+        LLM-->>SA: tool result
+        SA->>LLM: final analysis
+        LLM-->>SA: RISK_SCORE / FINDINGS / RECS / ESCALATE
+        SA-->>TP: AgentResult {risk=0.78, escalated=true}
+    and
+        TP->>SH: analyze(query, context)
+        SH->>LLM: call + tool: get_route_status()
+        LLM-->>SH: tool result
+        SH->>LLM: final analysis
+        LLM-->>SH: RISK_SCORE / FINDINGS / RECS / ESCALATE
+        SH-->>TP: AgentResult {risk=0.55, escalated=false}
+    and
+        TP->>IN: analyze(query, context)
+        IN->>LLM: calls + tools: check_inventory + get_forecast
+        LLM-->>IN: tool results
+        IN->>LLM: final analysis
+        LLM-->>IN: RISK_SCORE / FINDINGS / RECS / ESCALATE
+        IN-->>TP: AgentResult {risk=0.82, escalated=true}
+    end
+
+    TP-->>OR: [SA_result, SH_result, IN_result]
+
+    OR->>OR: _handle_escalations()
+    Note over OR: SA escalated: SA→RecommendationAgent<br/>IN escalated: IN→RecommendationAgent<br/>avg_risk>0.85: →Operations Director
+
+    OR->>RA: analyze(query, context, findings=[SA,SH,IN])
+    RA->>LLM: Synthesize findings + consolidate + proactive alerts
+    LLM-->>RA: Consolidated strategy + PROACTIVE_ALERTS
+    RA-->>OR: AgentResult {consolidated_recs, alerts}
+
+    OR->>OR: weighted risk consolidation
+    OR-->>FE: OrchestratorResponse {agents, risk, recs, escalation_chain, alerts}
+    FE-->>U: Agent cards + escalation chain + proactive alerts
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SEQ 4: INGESTION ───────────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-seq4">
+  <div class="section-header">
+    <h2><span class="badge badge-seq">Sequence Diagram 4</span> Data Ingestion Pipeline</h2>
+    <p>Triggered automatically at server startup (if store is empty) or manually via POST /ingest. Idempotent — skips if already indexed unless force_rebuild=true.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>CSV → Preprocess → Chunk → Embed (batch 64) → VectorStore → BM25</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor ADM as Admin / Server Startup
+    participant API as FastAPI /ingest
+    participant PIP as DataIngestionPipeline
+    participant PRE as Preprocessing
+    participant CHK as Chunking (tiktoken)
+    participant EM as EmbeddingModel
+    participant VS as VectorStore
+    participant BM as HybridSearch BM25
+
+    ADM->>API: POST /ingest {force_rebuild?}
+
+    alt force_rebuild = true
+        API->>VS: delete_collection()
+        VS-->>API: numpy arrays + JSON cleared
+    end
+
+    API->>PIP: ingest(data_path)
+    PIP->>PIP: check count() > 0?
+
+    alt Already indexed and not forced
+        PIP-->>API: skip (idempotent return)
+    else Empty store
+        PIP->>PRE: load_and_clean(CSV)
+        Note over PRE: type coerce, dedup, null fill, timestamp parse
+        PRE-->>PIP: cleaned DataFrame (600 rows)
+
+        PIP->>PRE: enrich_dataframe(df)
+        Note over PRE: risk_score, inventory_turnover, delay_ratio
+        PRE-->>PIP: enriched DataFrame
+
+        PIP->>CHK: dataframe_to_documents(df)
+        Note over CHK: Row → structured text + metadata + tiktoken count
+        CHK-->>PIP: 600 document dicts
+
+        loop Every 100 documents
+            PIP->>EM: encode(batch_texts, batch_size=64)
+            EM-->>PIP: embeddings [100 x 384 float32]
+            PIP->>VS: add_documents(batch, embeddings)
+            VS-->>PIP: upserted (upsert by incident_id)
+        end
+
+        PIP->>VS: _save() → documents.json + embeddings.npy
+    end
+
+    API->>BM: build_bm25_index()
+    Note over BM: BM25Okapi over full corpus, in-memory tokenized
+    BM-->>API: index ready
+
+    API-->>ADM: {status: success, documents_ingested: 600}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOW 1: ARCHITECTURE ──────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-flow1">
+  <div class="section-header">
+    <h2><span class="badge badge-flow">Flowchart 1</span> Complete System Architecture</h2>
+    <p>All system layers from the 5-tab frontend through the FastAPI endpoints, core services, multi-agent system, and data layer.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Frontend → API → Guardrails → Core → Agents → LLM → Data</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    U([Operations Manager]) --> FE[Frontend SPA\nindex.html - 5 Tabs]
+
+    FE --> S_EP[POST /search]
+    FE --> R_EP[POST /recommendations]
+    FE --> A_EP[POST /agents/analyze]
+    FE --> D_EP[GET /analytics/dashboard]
+    FE --> AN_EP[GET /analytics/anomalies]
+
+    subgraph API["FastAPI Application Layer"]
+        S_EP
+        R_EP
+        A_EP
+        D_EP
+        AN_EP
+    end
+
+    subgraph GUARD["Input Guardrails"]
+        G1[Length Validation\n3-1000 chars]
+        G2[Injection Detection\nRegex patterns]
+        G3[Domain Relevance\nKeyword scoring]
+    end
+
+    subgraph CORE["Core Services"]
+        EM[EmbeddingModel\nall-MiniLM-L6-v2\n384-dim]
+        VS[VectorStore\nNumpy + JSON\nCosine similarity]
+        BM[BM25 Index\nBM25Okapi]
+        HS[HybridSearch\nRRF alpha=0.5]
+        TC[TokenOptimizer\ntiktoken cl100k_base]
+    end
+
+    subgraph BSVC["Business Services"]
+        RS[Risk Scoring\n4-dimension weighted]
+        AD[Anomaly Detection\nIsolationForest]
+        RAG[RAG Service\nRetrieve + Generate]
+        EV[Evaluation\nDeepEval + LLM Judge]
+    end
+
+    subgraph AGENTS["Multi-Agent System"]
+        OR[Orchestrator\nThreadPoolExecutor]
+        SA[SupplierRiskAgent\nget_supplier_history]
+        SH[ShipmentAnalysisAgent\nget_route_status]
+        IN[InventoryIntelAgent\ncheck_inventory\nget_forecast]
+        RA[RecommendationAgent\nSynthesis]
+        A2A{A2A Escalation\nrisk > 0.7}
+    end
+
+    LLM[OpenAI GPT-4o\nchat.completions\nFunction Calling]
+
+    subgraph DATA["Data Layer"]
+        CSV[(supply_chain_data.csv\n600 incidents)]
+        NP[(embeddings.npy\ndocuments.json)]
+    end
+
+    API --> GUARD
+    GUARD --> CORE
+    CORE --> HS
+    HS --> VS & BM
+    RAG --> TC --> RS --> LLM
+    HS --> RAG
+    A_EP --> OR
+    OR --> SA & SH & IN
+    SA & SH & IN --> LLM
+    SA & SH & IN --> A2A --> RA --> LLM
+    D_EP --> VS
+    AN_EP --> AD --> VS
+    VS <--> NP
+    CSV --> VS
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOW 2: HYBRID SEARCH ─────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-flow2">
+  <div class="section-header">
+    <h2><span class="badge badge-flow">Flowchart 2</span> Hybrid Search Decision Flow</h2>
+    <p>Detailed flow of the BM25 + semantic retrieval combination using Reciprocal Rank Fusion, followed by the logistics-aware domain reranker.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Validate → Parallel Retrieve → RRF → Metadata Filter → Domain Rerank</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    START([Query Received]) --> GUARD{Guardrails\nPass?}
+    GUARD -->|Blocked| ERR[Return 400 Error\nwith reason]
+    GUARD -->|Valid| SAN[Sanitize Query\nstrip special chars]
+
+    SAN --> FILTER[Build Metadata Filter\nfrom request params:\nsupplier, severity,\nstatus, incident_type]
+
+    FILTER --> PARALLEL
+
+    subgraph PARALLEL["Parallel Retrieval  fetch_k = top_k x 3"]
+        direction LR
+        BM25["BM25Okapi\nTokenize query lower.split\nget_scores over full corpus"]
+        SEM["Semantic Search\nEncode 384-dim vector\nCosine similarity ANN\nwhere filter applied"]
+    end
+
+    BM25 --> RRF
+    SEM --> RRF
+
+    subgraph RRF["Reciprocal Rank Fusion  k=60  alpha=0.5"]
+        direction TB
+        R1["Semantic: alpha x 1 div k+rank_sem"]
+        R2["BM25: 1-alpha x 1 div k+rank_bm25"]
+        R3[Sum RRF scores per document_id\nUnion of both result sets]
+        R1 --> R3
+        R2 --> R3
+    end
+
+    RRF --> SORT[Sort descending by RRF score\nSlice top_k candidates]
+
+    SORT --> RERANK
+
+    subgraph RERANK["Logistics-Aware Reranker"]
+        RK1[For each result check query text]
+        RK2[Add +0.05 per matching field:\nincident_type, severity,\nwarehouse_location,\nsupplier_id, product_category]
+        RK3[Re-sort by rerank_score\nSlice final top_k]
+        RK1 --> RK2 --> RK3
+    end
+
+    RERANK --> OUT([Ranked IncidentDocument list\nwith score and rank fields])
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOW 3: RISK SCORING ──────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-flow3">
+  <div class="section-header">
+    <h2><span class="badge badge-flow">Flowchart 3</span> Risk Scoring Logic</h2>
+    <p>Multi-dimensional risk computation across four independent dimensions with severity multiplier, producing an overall 0–1 score and CRITICAL/HIGH/MEDIUM/LOW classification.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>4-Dimension Weighted Scoring → Severity Multiplier → Risk Level</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    IN([Retrieved Documents]) --> EMPTY{Documents\nempty?}
+    EMPTY -->|Yes| ZERO[Return overall=0.0\nLevel=LOW]
+    EMPTY -->|No| EXTRACT[Extract metrics per document:\ndelivery_delay, inventory_level\ntransportation_cost\nshipment_status, severity]
+
+    EXTRACT --> STATS[Compute aggregates:\navg_delay, avg_inventory, avg_cost\ndelayed_ratio, critical_count]
+
+    STATS --> S & I & SH & D
+
+    subgraph S["Supplier Risk  weight 35%"]
+        S1{avg_delay days}
+        S1 -->|greater 14| SR1[0.90]
+        S1 -->|greater 7| SR2[0.65]
+        S1 -->|greater 3| SR3[0.40]
+        S1 -->|0 to 3| SR4[0.15]
+    end
+
+    subgraph I["Inventory Risk  weight 30%"]
+        I1{avg_inventory units}
+        I1 -->|less 50| IR1[0.95]
+        I1 -->|less 150| IR2[0.70]
+        I1 -->|less 300| IR3[0.40]
+        I1 -->|300 plus| IR4[0.15]
+    end
+
+    subgraph SH["Shipment Risk  weight 25%"]
+        SH1{delayed_ratio}
+        SH1 -->|greater 60%| SHR1[0.85]
+        SH1 -->|greater 30%| SHR2[0.55]
+        SH1 -->|under 30%| SHR3[0.20]
+    end
+
+    subgraph D["Demand Risk  weight 10%"]
+        D1{avg_cost USD}
+        D1 -->|greater 3000| DR1[0.70]
+        D1 -->|greater 2000| DR2[0.45]
+        D1 -->|under 2000| DR3[0.20]
+    end
+
+    SR1 & IR1 & SHR1 & DR1 --> W
+    SR2 & IR2 & SHR2 & DR2 --> W
+    SR3 & IR3 & SHR3 & DR3 --> W
+    SR4 & IR4 & SHR3 & DR3 --> W
+
+    subgraph W["Weighted Formula"]
+        WF["overall = supplier x 0.35\n+ inventory x 0.30\n+ shipment x 0.25\n+ demand x 0.10"]
+    end
+
+    W --> MULT{critical_count\ngreater 0?}
+    MULT -->|Yes| MX1[multiply 1.2]
+    MULT -->|No| MULT2{high_count\ngreater 1?}
+    MULT2 -->|Yes| MX2[multiply 1.1]
+    MULT2 -->|No| CLM[min score 1.0]
+    MX1 --> CLM
+    MX2 --> CLM
+
+    CLM --> LVL{Threshold}
+    LVL -->|0.75 to 1.0| C1[CRITICAL]
+    LVL -->|0.50 to 0.74| C2[HIGH]
+    LVL -->|0.25 to 0.49| C3[MEDIUM]
+    LVL -->|0.0 to 0.24| C4[LOW]
+
+    C1 & C2 & C3 & C4 --> OUT([RiskScore object\nall dimensions + level + factors])
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOW 4: AGENT A2A ─────────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-flow4">
+  <div class="section-header">
+    <h2><span class="badge badge-flow">Flowchart 4</span> Multi-Agent Orchestration & A2A Escalation</h2>
+    <p>Shows agent selection, parallel execution with error isolation, threshold-based A2A escalation chain, and weighted risk consolidation.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Select → Parallel Pool → Error Isolation → A2A → Synthesize → Consolidate</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    START([Query + Optional Filters]) --> GUARD[Guardrails Validate and Sanitize]
+    GUARD --> CTX[Hybrid Search top 10 context documents]
+    CTX --> SEL{include_all_agents?}
+
+    SEL -->|true| ALL[Supplier + Shipment + Inventory]
+    SEL -->|false| ROUTE[Keyword Route]
+    ROUTE --> |supplier vendor delay| R1[SupplierRiskAgent]
+    ROUTE --> |shipment port freight| R2[ShipmentAnalysisAgent]
+    ROUTE --> |inventory stock demand| R3[InventoryIntelAgent]
+
+    ALL --> POOL
+    R1 & R2 & R3 --> POOL
+
+    subgraph POOL["ThreadPoolExecutor max_workers=3  timeout=60s"]
+        direction LR
+        subgraph SRA["SupplierRiskAgent"]
+            SA1[Build system + user messages]
+            SA2[GPT-4o + tool_use\nget_supplier_history]
+            SA3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
+            SA1-->SA2-->SA3
+        end
+        subgraph SHA["ShipmentAnalysisAgent"]
+            SH1[Build system + user messages]
+            SH2[GPT-4o + tool_use\nget_route_status]
+            SH3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
+            SH1-->SH2-->SH3
+        end
+        subgraph INA["InventoryIntelAgent"]
+            IN1[Build system + user messages]
+            IN2[GPT-4o + 2 tools\ncheck_inventory\nget_demand_forecast]
+            IN3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
+            IN1-->IN2-->IN3
+        end
+    end
+
+    SA3 & SH3 & IN3 --> COLLECT[Collect AgentResult objects]
+
+    COLLECT --> FAIL{Any agent\nraised exception?}
+    FAIL -->|Yes| STUB[Insert stub AgentResult\nrisk=0.0 manual_review]
+    FAIL -->|No| ESC
+    STUB --> ESC
+
+    ESC{Any agent\nescalated?\nrisk score > 0.7}
+    ESC -->|Yes| A2A_LOG[Log A2A chain entry:\nAgentName to RecommendationAgent\nescalation_reason]
+    A2A_LOG --> DIR{avg escalated\nrisk > 0.85?}
+    DIR -->|Yes| DIRE[Append: RecommendationAgent\nto Operations Director]
+    DIR -->|No| SYNTH
+    DIRE --> SYNTH
+    ESC -->|No| SYNTH
+
+    SYNTH[RecommendationAgent.analyze\nall agent findings as input]
+    SYNTH --> LLM2[GPT-4o synthesize\nconsolidate resolve conflicts\nextract PROACTIVE_ALERTS]
+    LLM2 --> CONS[consolidated_risk = weighted average\nS=0.35 SH=0.30 I=0.35]
+    CONS --> DEDUP[Merge and deduplicate\nrecommendations by first 60 chars]
+    DEDUP --> OUT([OrchestratorResponse\nagent_results consolidated_risk\nescalation_chain proactive_alerts])
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOW 5: ANOMALY ───────────────────────────────────────────────────── -->
+<section class="diagram-section" id="sec-flow5">
+  <div class="section-header">
+    <h2><span class="badge badge-flow">Flowchart 5</span> Anomaly Detection Pipeline</h2>
+    <p>IsolationForest-based multivariate anomaly detection with Z-score feature attribution and Pearson correlation insights across all 600 incidents.</p>
+  </div>
+  <div class="diagram-card">
+    <h3>Load All Docs → Feature Matrix → Normalize → IsolationForest → Attribute → Correlate</h3>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart TD
+    START([GET /analytics/anomalies\ncontamination param]) --> LOAD[Load all documents\nfrom VectorStore.get_all]
+
+    LOAD --> CHK{Count\ngreater equal 10?}
+    CHK -->|No| INSUF[Return AnomalyResponse\n0 anomalies\ninsufficient data note]
+
+    CHK -->|Yes| FEAT[Build feature matrix N x 5\ndelivery_delay\ninventory_level\ntransportation_cost\norder_quantity\ndemand_forecast]
+
+    FEAT --> SCALE[StandardScaler.fit_transform\nzero mean unit variance]
+
+    SCALE --> ISO[IsolationForest\nn_estimators=100\ncontamination=configurable\nrandom_state=42]
+
+    ISO --> FIT[fit_predict labels +1 or -1\nscore_samples anomaly scores]
+
+    FIT --> FILT[Filter: label == -1\nanomalous records only]
+
+    FILT --> ATTR[Z-score attribution per feature\nflag if Z-score > 2.5\ndirection high or low]
+
+    ATTR --> DESC[Generate human-readable description\nwarehouse + supplier + features]
+
+    DESC --> SRTD[Sort by anomaly_score descending\nReturn top 20]
+
+    SRTD --> CORR
+
+    subgraph CORR["Pearson Correlation Analysis  full dataset"]
+        C1[Compute correlation matrix\nfor all 5 numeric features]
+        C2{delay to cost\nabsolute r > 0.30?}
+        C3{inventory to delay\nabsolute r > 0.20?}
+        C4{demand to cost\nabsolute r > 0.25?}
+        C5{high delay\npercentage > 20?}
+        C6{low inventory\npercentage > 15?}
+        C1 --> C2 & C3 & C4 & C5 & C6
+    end
+
+    CORR --> INS[Collect up to 5 correlation insights]
+
+    INS --> OUT([AnomalyResponse\ntotal_anomalies\nanomalies top 20 with scores\ncorrelation_insights])
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 60, messageMargin: 30, mirrorActors: false },
+    themeVariables: {
+      primaryColor: '#e8f0fe',
+      primaryTextColor: '#1a1d27',
+      primaryBorderColor: '#4f7fff',
+      lineColor: '#4f7fff',
+      secondaryColor: '#f3f0ff',
+      tertiaryColor: '#f0fdf4',
+      noteBkgColor: '#fffbeb',
+      noteTextColor: '#1a1d27',
+      actorBkg: '#e8f0fe',
+      actorBorder: '#4f7fff',
+      activationBkgColor: '#dbeafe',
+    }
+  });
+
+  function show(id) {
+    document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    event.target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
