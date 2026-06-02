@@ -97,16 +97,25 @@ class RAGService:
         context_text = _build_context(trimmed_docs)
         user_message = _build_recommendation_prompt(clean_query, context_text, risk_score)
 
-        response = self.client.chat.completions.create(
-            model=self.settings.LLM_MODEL,
-            max_tokens=self.settings.MAX_TOKENS,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
-        )
-
-        raw_text = response.choices[0].message.content or ""
+        try:
+            response = self.client.chat.completions.create(
+                model=self.settings.LLM_MODEL,
+                max_tokens=self.settings.MAX_TOKENS,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message},
+                ],
+            )
+            raw_text = response.choices[0].message.content or ""
+        except Exception as e:
+            err = str(e)
+            if "timed out" in err.lower() or "connection" in err.lower():
+                raise ValueError(
+                    f"LLM gateway is currently unreachable ({err[:80]}). "
+                    "Search, Dashboard, and Anomaly Detection still work. "
+                    "Please retry recommendations when the gateway is available."
+                )
+            raise
         recommendations = _parse_recommendations(raw_text)
         summary = _extract_summary(raw_text)
         confidence = _estimate_confidence(risk_score.overall_score, len(trimmed_docs))

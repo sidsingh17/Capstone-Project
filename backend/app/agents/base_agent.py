@@ -60,7 +60,16 @@ class BaseSupplyChainAgent(ABC):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
-        response = self.client.chat.completions.create(**kwargs)
+        try:
+            response = self.client.chat.completions.create(**kwargs)
+        except Exception as e:
+            err = str(e)
+            if "timed out" in err.lower() or "connection" in err.lower():
+                raise RuntimeError(
+                    f"LLM gateway unreachable: {err[:80]}. "
+                    "Gateway may be temporarily down. Search and Analytics still work."
+                )
+            raise
         msg = response.choices[0].message
 
         # Handle tool calls if present

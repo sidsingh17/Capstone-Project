@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     CHROMA_COLLECTION_NAME: str = "supply_chain_incidents"
     CHROMA_BASE_DIR: str = "./chroma_sessions"      # session-scoped store root
 
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
     TOP_K_RESULTS: int = 10
     HYBRID_ALPHA: float = 0.5
@@ -49,5 +49,10 @@ def make_openai_client():
     kwargs: dict = {"api_key": s.OPENAI_API_KEY}
     if s.OPENAI_BASE_URL:
         kwargs["base_url"] = s.OPENAI_BASE_URL
-        kwargs["http_client"] = httpx.Client(verify=False)
+        # verify=False: gateway cert not in certifi bundle
+        # timeout=60s: default httpx timeout is 5s — too short for gateway round-trips
+        kwargs["http_client"] = httpx.Client(
+            verify=False,
+            timeout=httpx.Timeout(120.0, connect=10.0),
+        )
     return OpenAI(**kwargs)

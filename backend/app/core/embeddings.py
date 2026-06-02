@@ -51,10 +51,23 @@ class EmbeddingModel:
     # ── Probe: try OpenAI, fall back to sentence-transformers ─────────────────
 
     def _probe(self):
-        """Try one embedding call to see if the API endpoint is reachable."""
+        """Try one embedding call (5s timeout) to see if the API endpoint is reachable."""
         if self._config_model in _OPENAI_DIMS:
             try:
-                client = make_openai_client()
+                import httpx
+                from openai import OpenAI
+                from app.core.config import get_settings
+                s = get_settings()
+                # Short 5-second timeout for the probe — fail fast, don't block startup
+                probe_kwargs: dict = {"api_key": s.OPENAI_API_KEY}
+                if s.OPENAI_BASE_URL:
+                    probe_kwargs["base_url"] = s.OPENAI_BASE_URL
+                    probe_kwargs["http_client"] = httpx.Client(
+                        verify=False,
+                        timeout=httpx.Timeout(5.0, connect=5.0),
+                    )
+                    probe_kwargs["max_retries"] = 0
+                client = OpenAI(**probe_kwargs)
                 client.embeddings.create(model=self._config_model, input=["probe"])
                 # success — use OpenAI
                 self._openai_client = client
