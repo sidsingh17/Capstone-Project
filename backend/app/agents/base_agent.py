@@ -4,7 +4,7 @@ import json
 import logging
 from openai import OpenAI
 
-from app.core.config import get_settings
+from app.core.config import get_settings, make_openai_client
 from app.models.schemas import AgentResult
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class BaseSupplyChainAgent(ABC):
     @property
     def client(self) -> OpenAI:
         if self._client is None:
-            self._client = OpenAI(api_key=self.settings.OPENAI_API_KEY)
+            self._client = make_openai_client()
         return self._client
 
     @property

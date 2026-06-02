@@ -3,7 +3,7 @@ import time
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 
-from app.core.config import get_settings
+from app.core.config import get_settings, make_openai_client
 from app.core.hybrid_search import HybridSearchEngine
 from app.core.guardrails import validate_query, sanitize_query
 from app.data.chunking import truncate_context
@@ -34,7 +34,7 @@ class RAGService:
     @property
     def client(self) -> OpenAI:
         if self._client is None:
-            self._client = OpenAI(api_key=self.settings.OPENAI_API_KEY)
+            self._client = make_openai_client()
         return self._client
 
     def search(self, request: SearchQuery) -> SearchResponse:

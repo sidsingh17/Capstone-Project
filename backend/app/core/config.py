@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -10,16 +11,18 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: Optional[str] = None          # custom gateway / proxy
 
     CHROMA_PERSIST_DIRECTORY: str = "./chroma_db"
     CHROMA_COLLECTION_NAME: str = "supply_chain_incidents"
+    CHROMA_BASE_DIR: str = "./chroma_sessions"      # session-scoped store root
 
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
 
     TOP_K_RESULTS: int = 10
     HYBRID_ALPHA: float = 0.5
 
-    LLM_MODEL: str = "gpt-4o"
+    LLM_MODEL: str = "gpt-4o-mini"
     MAX_TOKENS: int = 4096
     MAX_CONTEXT_TOKENS: int = 8000
 
@@ -32,3 +35,13 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
+
+
+def make_openai_client():
+    """Create an OpenAI client with optional custom base_url (gateway support)."""
+    from openai import OpenAI
+    s = get_settings()
+    kwargs = {"api_key": s.OPENAI_API_KEY}
+    if s.OPENAI_BASE_URL:
+        kwargs["base_url"] = s.OPENAI_BASE_URL
+    return OpenAI(**kwargs)

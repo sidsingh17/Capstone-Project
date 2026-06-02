@@ -1,7 +1,7 @@
 """
-Pure-numpy vector store — same interface as the original ChromaDB wrapper.
-Persists documents as JSON and embeddings as .npy files.
-No C++ compilation required.
+Pure-numpy vector store with embedding-model metadata guard.
+Auto-clears and rebuilds when the embedding model changes
+(e.g. sentence-transformers -> text-embedding-3-small).
 """
 import json
 import logging
@@ -13,6 +13,8 @@ import numpy as np
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+_META_FILE = "store_meta.json"
 
 
 class VectorStore:
@@ -32,12 +34,40 @@ class VectorStore:
         self._persist_dir.mkdir(parents=True, exist_ok=True)
         self._docs_file = self._persist_dir / "documents.json"
         self._embs_file = self._persist_dir / "embeddings.npy"
+        self._meta_file = self._persist_dir / _META_FILE
+        self._current_model = settings.EMBEDDING_MODEL
         self._documents: List[Dict[str, Any]] = []
         self._embeddings: Optional[np.ndarray] = None
         self._id_to_idx: Dict[str, int] = {}
+        self._check_model_compatibility()
         self._load()
         self._ready = True
-        logger.info(f"VectorStore ready — {len(self._documents)} documents")
+        logger.info(f"VectorStore ready — {len(self._documents)} documents [{self._current_model}]")
+
+    # ── Model compatibility guard ──────────────────────────────────────────────
+
+    def _check_model_compatibility(self):
+        """If the embedding model changed, wipe the store so it can be re-indexed."""
+        if not self._meta_file.exists():
+            return
+        try:
+            with open(self._meta_file, encoding="utf-8") as f:
+                meta = json.load(f)
+            stored_model = meta.get("embedding_model", "")
+            if stored_model and stored_model != self._current_model:
+                logger.warning(
+                    f"Embedding model changed: {stored_model!r} -> {self._current_model!r}. "
+                    "Clearing vector store for re-indexing."
+                )
+                for path in [self._docs_file, self._embs_file, self._meta_file]:
+                    if path.exists():
+                        path.unlink()
+        except Exception as e:
+            logger.error(f"Model compatibility check failed: {e}")
+
+    def _save_meta(self):
+        with open(self._meta_file, "w", encoding="utf-8") as f:
+            json.dump({"embedding_model": self._current_model}, f)
 
     # ── Persistence ────────────────────────────────────────────────────────────
 
@@ -54,6 +84,7 @@ class VectorStore:
             json.dump(self._documents, f, ensure_ascii=False)
         if self._embeddings is not None:
             np.save(str(self._embs_file), self._embeddings)
+        self._save_meta()
 
     # ── Write ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +98,6 @@ class VectorStore:
         for doc, emb in zip(documents, embeddings):
             doc_id = doc["id"]
             if doc_id in self._id_to_idx:
-                # Upsert: overwrite in-place
                 idx = self._id_to_idx[doc_id]
                 self._documents[idx] = doc
                 if self._embeddings is not None:
@@ -81,7 +111,6 @@ class VectorStore:
             self._documents.extend(new_docs)
             for i, d in enumerate(new_docs):
                 self._id_to_idx[d["id"]] = start + i
-
             arr = np.array(new_embs, dtype=np.float32)
             self._embeddings = arr if self._embeddings is None else np.vstack([self._embeddings, arr])
 
@@ -108,7 +137,7 @@ class VectorStore:
         embs = self._embeddings[candidate_indices]
         norms = np.linalg.norm(embs, axis=1, keepdims=True)
         embs_normed = embs / (norms + 1e-9)
-        scores = embs_normed @ q_norm                         # cosine similarity
+        scores = embs_normed @ q_norm
 
         top_n = min(top_k, len(candidate_indices))
         top_local = np.argsort(scores)[::-1][:top_n]
@@ -165,10 +194,9 @@ class VectorStore:
         self._documents = []
         self._embeddings = None
         self._id_to_idx = {}
-        if self._docs_file.exists():
-            self._docs_file.unlink()
-        if self._embs_file.exists():
-            self._embs_file.unlink()
+        for path in [self._docs_file, self._embs_file, self._meta_file]:
+            if path.exists():
+                path.unlink()
         logger.info("VectorStore collection cleared")
 
     def build_where_filter(
