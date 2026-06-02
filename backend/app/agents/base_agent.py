@@ -47,7 +47,7 @@ class BaseSupplyChainAgent(ABC):
         self,
         messages: List[Dict[str, Any]],
         tools: Optional[List[Dict[str, Any]]] = None,
-        max_tokens: int = 1500,
+        max_tokens: int = 500,
     ) -> str:
         full_messages = [{"role": "system", "content": self.system_prompt}] + messages
 

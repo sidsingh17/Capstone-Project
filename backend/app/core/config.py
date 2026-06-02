@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     HYBRID_ALPHA: float = 0.5
 
     LLM_MODEL: str = "gpt-4o-mini"
-    MAX_TOKENS: int = 4096
+    MAX_TOKENS: int = 500
     MAX_CONTEXT_TOKENS: int = 8000
 
     DATA_PATH: str = "./data/supply_chain_data.csv"
@@ -38,10 +38,16 @@ def get_settings() -> Settings:
 
 
 def make_openai_client():
-    """Create an OpenAI client with optional custom base_url (gateway support)."""
+    """
+    Create an OpenAI client.
+    When OPENAI_BASE_URL is set (custom gateway), SSL verification is disabled
+    because corporate/educational gateways often use certificates not in certifi.
+    """
     from openai import OpenAI
+    import httpx
     s = get_settings()
-    kwargs = {"api_key": s.OPENAI_API_KEY}
+    kwargs: dict = {"api_key": s.OPENAI_API_KEY}
     if s.OPENAI_BASE_URL:
         kwargs["base_url"] = s.OPENAI_BASE_URL
+        kwargs["http_client"] = httpx.Client(verify=False)
     return OpenAI(**kwargs)

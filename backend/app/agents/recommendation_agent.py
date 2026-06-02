@@ -69,7 +69,7 @@ Generate a consolidated, prioritized mitigation strategy that:
             }
         ]
 
-        response_text = self._call_llm(messages, max_tokens=2000)
+        response_text = self._call_llm(messages, max_tokens=500)
         result = _parse_agent_result(self.agent_name, self.agent_type, response_text)
 
         # Extract proactive alerts

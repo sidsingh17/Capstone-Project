@@ -47,23 +47,50 @@ class VectorStore:
     # ── Model compatibility guard ──────────────────────────────────────────────
 
     def _check_model_compatibility(self):
-        """If the embedding model changed, wipe the store so it can be re-indexed."""
-        if not self._meta_file.exists():
-            return
-        try:
-            with open(self._meta_file, encoding="utf-8") as f:
-                meta = json.load(f)
-            stored_model = meta.get("embedding_model", "")
-            if stored_model and stored_model != self._current_model:
-                logger.warning(
-                    f"Embedding model changed: {stored_model!r} -> {self._current_model!r}. "
-                    "Clearing vector store for re-indexing."
-                )
-                for path in [self._docs_file, self._embs_file, self._meta_file]:
-                    if path.exists():
-                        path.unlink()
-        except Exception as e:
-            logger.error(f"Model compatibility check failed: {e}")
+        """
+        Clear the store if the embedding model name OR dimension changed.
+        Dimension is checked directly from the stored .npy file to catch
+        cases where meta is stale (e.g. fallback model wrote 384-dim vectors
+        but meta still records 'text-embedding-3-small').
+        """
+        stale = False
+        reason = ""
+
+        if self._meta_file.exists():
+            try:
+                with open(self._meta_file, encoding="utf-8") as f:
+                    meta = json.load(f)
+                stored_model = meta.get("embedding_model", "")
+                if stored_model and stored_model != self._current_model:
+                    stale = True
+                    reason = f"model changed {stored_model!r} -> {self._current_model!r}"
+            except Exception as e:
+                logger.error(f"Model compatibility check failed: {e}")
+
+        # Dimension check: peek at the stored npy shape
+        if not stale and self._embs_file.exists():
+            try:
+                stored = np.load(str(self._embs_file), mmap_mode="r")
+                stored_dim = stored.shape[1] if stored.ndim == 2 and stored.shape[0] > 0 else 0
+                # Infer expected dim from known models
+                _KNOWN_DIMS = {
+                    "text-embedding-3-small": 1536,
+                    "text-embedding-3-large": 3072,
+                    "text-embedding-ada-002": 1536,
+                    "all-MiniLM-L6-v2": 384,
+                }
+                expected_dim = _KNOWN_DIMS.get(self._current_model, 0)
+                if expected_dim and stored_dim and stored_dim != expected_dim:
+                    stale = True
+                    reason = f"dimension mismatch: stored {stored_dim}-dim vs expected {expected_dim}-dim for {self._current_model!r}"
+            except Exception as e:
+                logger.warning(f"Dimension check failed (will not clear): {e}")
+
+        if stale:
+            logger.warning(f"Vector store stale ({reason}). Clearing for re-indexing.")
+            for path in [self._docs_file, self._embs_file, self._meta_file]:
+                if path.exists():
+                    path.unlink()
 
     def _save_meta(self):
         with open(self._meta_file, "w", encoding="utf-8") as f:
