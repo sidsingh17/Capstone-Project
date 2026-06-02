@@ -135,7 +135,7 @@
       <div><div class="cg-label">Version</div><div class="cg-val">1.0.0</div></div>
       <div><div class="cg-label">Total Criteria</div><div class="cg-val">10 Evaluation Sections</div></div>
       <div><div class="cg-label">Total Questions</div><div class="cg-val">40+ Detailed Q&amp;As</div></div>
-      <div><div class="cg-label">Stack</div><div class="cg-val">FastAPI · OpenAI GPT-4o · NumPy</div></div>
+      <div><div class="cg-label">Stack</div><div class="cg-val">FastAPI 0.136 · GPT-4o-mini · text-embedding-3-small · NumPy VectorStore</div></div>
       <div><div class="cg-label">Repository</div><div class="cg-val">sidsingh17/Capstone-Project</div></div>
       <div><div class="cg-label">Date</div><div class="cg-val">June 2026</div></div>
       <div><div class="cg-label">Author</div><div class="cg-val">Siddharth SR</div></div>
@@ -274,7 +274,7 @@
       <div class="hbox hbox-warn" style="margin-top:3mm;font-size:8.5pt;font-family:'Courier New',monospace">
         [incident_description]. Incident Type: [type]. Supplier: [id]. Warehouse: [location]. Region: [region]. Status: [status]. Severity: [severity]. Delivery Delay: [N] days. Inventory Level: [N] units. Transportation Cost: $[N]. Date: [date]
       </div>
-      <br/><strong>Why row-per-document over sliding window?</strong> Each CSV row is a complete, self-contained incident event with a natural semantic boundary. Splitting rows would lose the event-level context. At ~60–80 tokens per document, all records fit well within the all-MiniLM-L6-v2's 256-token limit without truncation. Token counts are stored in metadata using <strong>tiktoken cl100k_base</strong> for downstream budget management.
+      <br/><strong>Why row-per-document over sliding window?</strong> Each CSV row is a complete, self-contained incident event with a natural semantic boundary. Splitting rows would lose the event-level context. At ~60–80 tokens per document, all records fit well within both the OpenAI text-embedding-3-small (8191-token limit) and the fallback all-MiniLM-L6-v2 (256-token limit) without truncation. Token counts are stored in metadata using <strong>tiktoken cl100k_base</strong> for downstream budget management.
     </div>
   </div>
 
@@ -341,13 +341,13 @@
 
   <div class="qa-card">
     <div class="qa-q"><div class="qa-q-icon">Q</div>How is the embedding model chosen and what is its role?</div>
-    <div class="qa-a"><strong>all-MiniLM-L6-v2</strong> (Sentence-Transformers) is used for its optimal balance of speed, size, and quality for semantic similarity tasks:
-      <span class="pill pill-blue">384 dimensions</span>
-      <span class="pill pill-blue">256-token max input</span>
-      <span class="pill pill-green">~80 MB model size</span>
-      <span class="pill pill-green">~14,000 sentences/sec on CPU</span>
-      <span class="pill pill-orange">L2-normalised output</span>
-      <br/><br/>L2-normalisation means cosine similarity equals the dot product — used in the numpy vector store for efficient batch scoring: <code>embs_normed @ q_norm</code>. A singleton pattern ensures the model loads only once per process.
+    <div class="qa-a">The <strong>primary</strong> embedding model is <strong>text-embedding-3-small</strong> (OpenAI, 1536-dim), accessed via the keygateway endpoint. A <strong>fallback</strong> to <strong>all-MiniLM-L6-v2</strong> (sentence-transformers, local, 384-dim) is automatically activated if the gateway /embeddings endpoint is unreachable:
+      <span class="pill pill-blue">1536 dimensions (primary)</span>
+      <span class="pill pill-blue">384 dimensions (fallback)</span>
+      <span class="pill pill-green">OpenAI text-embedding-3-small (primary)</span>
+      <span class="pill pill-orange">all-MiniLM-L6-v2 local (fallback)</span>
+      <span class="pill pill-purple">L2-normalised output</span>
+      <br/><br/>On startup, the system probes the gateway. If reachable, OpenAI embeddings are used for both ingestion and query encoding. If unreachable, sentence-transformers loads locally. The vector store stores a <code>store_meta.json</code> with model/dimension info — if a mismatch is detected on restart (e.g., switching from 384-dim to 1536-dim), the store auto-clears and re-ingests to prevent dimension errors. L2-normalisation allows cosine similarity via dot product: <code>embs_normed @ q_norm</code>.
     </div>
   </div>
 
@@ -454,7 +454,7 @@
     <div class="qa-q"><div class="qa-q-icon">Q</div>How does evidence grounding ensure recommendation quality?</div>
     <div class="qa-a">The RAG pipeline grounds every recommendation in retrieved historical evidence through three mechanisms:
       <ol>
-        <li><strong>Context injection:</strong> Up to 8 retrieved incidents (trimmed to 8,000 tokens) are embedded directly in the GPT-4o prompt — the model generates recommendations based on actual past disruptions, not hallucinated patterns.</li>
+        <li><strong>Context injection:</strong> Up to 8 retrieved incidents (trimmed to 8,000 tokens) are embedded directly in the GPT-4o-mini prompt — the model generates recommendations based on actual past disruptions, not hallucinated patterns.</li>
         <li><strong>Faithfulness enforcement:</strong> The LLM-as-judge evaluation explicitly scores <em>Evidence-Based</em> (0–10): "Are recommendations grounded in the historical data?" — low-scoring responses are flagged.</li>
         <li><strong>Risk factor attribution:</strong> Every risk score comes with a <code>risk_factors</code> list identifying which specific metric and threshold triggered each dimension — creating a complete audit trail from query to recommendation.</li>
       </ol>
@@ -489,6 +489,26 @@
         </tbody>
       </table>
       The backend is containerised via <code>Dockerfile</code> and <code>docker-compose.yml</code>, with the frontend served separately via Nginx Alpine.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What is the current technology stack?</div>
+    <div class="qa-a">
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Component</th><th>Technology</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Runtime</strong></td><td>Python 3.13</td><td>Latest stable; some C-extension packages (e.g., ChromaDB) incompatible — numpy-only vector store used instead</td></tr>
+          <tr><td><strong>Web Framework</strong></td><td>FastAPI 0.136.3 / Starlette 1.2.1</td><td>Async-capable; Pydantic v2 schemas</td></tr>
+          <tr><td><strong>LLM</strong></td><td>OpenAI GPT-4o-mini (<code>gpt-4o-mini</code>)</td><td>Via <code>https://keygateway.arshnivlabs.com/v1</code> · MAX_TOKENS=500 (gateway cap)</td></tr>
+          <tr><td><strong>Embedding (Primary)</strong></td><td>OpenAI text-embedding-3-small (1536-dim)</td><td>Same gateway; auto-probed on startup</td></tr>
+          <tr><td><strong>Embedding (Fallback)</strong></td><td>all-MiniLM-L6-v2 (384-dim, local)</td><td>sentence-transformers; auto-activated if gateway /embeddings unreachable</td></tr>
+          <tr><td><strong>Vector Store</strong></td><td>Pure-Numpy VectorStore (<code>embeddings.npy</code> + <code>documents.json</code>)</td><td>Replaces ChromaDB; Python 3.13 / MSVC build tool constraint</td></tr>
+          <tr><td><strong>BM25</strong></td><td>rank_bm25.BM25Okapi</td><td>In-memory; lazy rebuild from corpus</td></tr>
+          <tr><td><strong>Anomaly Detection</strong></td><td>scikit-learn IsolationForest</td><td>n_estimators=100; contamination=configurable</td></tr>
+          <tr><td><strong>SSL Fix</strong></td><td><code>httpx.Client(verify=False)</code> in <code>config.py</code></td><td>Gateway CA not in certifi trust store; curl works via system certs</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -548,7 +568,7 @@
 
   <div class="qa-card">
     <div class="qa-q"><div class="qa-q-icon">Q</div>How does the LLM-as-judge work and what does it evaluate?</div>
-    <div class="qa-a">The LLM-as-judge uses <strong>GPT-4o as an independent evaluator</strong> of recommendation quality. It scores responses across five supply chain-specific dimensions (0–10 each):
+    <div class="qa-a">The LLM-as-judge uses <strong>GPT-4o-mini as an independent evaluator</strong> of recommendation quality. It scores responses across five supply chain-specific dimensions (0–10 each):
       <ol>
         <li><strong>Relevance</strong> — Are recommendations directly tied to the identified risk?</li>
         <li><strong>Actionability</strong> — Can the operations team execute these steps immediately?</li>
@@ -670,6 +690,22 @@
   </div>
 
   <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>Why is SSL verification disabled for the gateway?</div>
+    <div class="qa-a">The <code>make_openai_client()</code> function in <code>config.py</code> passes <code>httpx.Client(verify=False)</code> when <code>OPENAI_BASE_URL</code> is set. This is necessary because the keygateway (<code>https://keygateway.arshnivlabs.com/v1</code>) uses a TLS certificate issued by a Certificate Authority that is not in Python's <code>certifi</code> trust bundle.
+      <br/><br/><strong>Why curl works but Python httpx does not:</strong> curl uses the operating system's native certificate store (Windows CertMgr / Linux ca-certificates), which may include the gateway's CA. Python's <code>certifi</code> ships its own CA bundle independent of the OS store — the gateway's CA is absent from it, causing an <code>SSLCertVerificationError</code>. Disabling verification is an acceptable development-environment workaround since the gateway is a known, trusted internal endpoint.
+      <br/><br/><strong>Production fix:</strong> The correct production solution is to add the gateway's CA certificate to the certifi bundle (or provide a custom CA via <code>ssl_ca_cert</code>) rather than disabling verification globally. The environment variable <code>OPENAI_BASE_URL</code> controls whether the workaround is applied — standard OpenAI API calls (no custom base URL) use the default verified client.
+      <br/><br/><strong>Key .env variables for gateway:</strong>
+      <ul>
+        <li><code>OPENAI_API_KEY=learner039</code></li>
+        <li><code>OPENAI_BASE_URL=https://keygateway.arshnivlabs.com/v1</code></li>
+        <li><code>LLM_MODEL=gpt-4o-mini</code></li>
+        <li><code>EMBEDDING_MODEL=text-embedding-3-small</code></li>
+        <li><code>MAX_TOKENS=500</code> (gateway hard cap — exceeding causes errors)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-card">
     <div class="qa-q"><div class="qa-q-icon">Q</div>What testing is in place?</div>
     <div class="qa-a">Unit tests cover the two most critical non-LLM components:
       <ul>
@@ -719,7 +755,7 @@
       A: Three layers: (1) Retrieved incidents are injected directly into the prompt as grounding context. (2) DeepEval Faithfulness metric flags responses that make claims unsupported by the context. (3) LLM-as-judge scores Evidence-Based dimension — low scores are surfaced to the user.
       <br/><br/>
       <strong>Q: "Why not use a managed vector database like Pinecone?"</strong><br/>
-      A: The VectorStore is fully abstracted — the numpy implementation is a development choice for Python 3.13 / Windows compatibility. In production, the interface is identical; only <code>vector_store.py</code> changes. ChromaDB or Pinecone would be the next step.
+      A: The VectorStore is fully abstracted — the Pure-Numpy implementation is a deliberate choice for Python 3.13 / Windows compatibility (ChromaDB requires MSVC build tools not available in Python 3.13 on Windows). In production, only <code>vector_store.py</code> changes — the rest of the stack is unaffected. Pinecone or Weaviate would be the production upgrade path.
       <br/><br/>
       <strong>Q: "How does the system scale to 10 million incidents?"</strong><br/>
       A: Replace the numpy store with Pinecone (managed ANN at scale), run multiple Uvicorn workers behind a load balancer, use Redis caching for frequent queries. The BM25 index would move to Elasticsearch. The agent and RAG logic remains unchanged.
@@ -740,7 +776,16 @@
     </div>
   </div>
 
-  <div class="hbox hbox-green"><strong>Setup for Demo:</strong> Ensure <code>uvicorn app.main:app --port 8000</code> is running from the <code>backend/</code> directory with a valid <code>OPENAI_API_KEY</code> in <code>.env</code>. Open <code>frontend/index.html</code> in Chrome. The health badge in the header turns green when the server is ready. The vector store persists between restarts — no re-ingestion needed.</div>
+  <div class="hbox hbox-green"><strong>Setup for Demo (Python 3.13 + keygateway):</strong>
+    <ol style="margin-top:3mm">
+      <li>Copy <code>.env.example</code> to <code>backend/.env</code> — set <code>OPENAI_API_KEY=learner039</code>, <code>OPENAI_BASE_URL=https://keygateway.arshnivlabs.com/v1</code>, <code>LLM_MODEL=gpt-4o-mini</code>, <code>MAX_TOKENS=500</code></li>
+      <li>Run <code>pip install -r backend/requirements.txt</code> (pure-numpy stack; no ChromaDB or MSVC build tools needed)</li>
+      <li>Generate dataset: <code>cd backend &amp;&amp; python -m app.data.generate_sample</code></li>
+      <li>Start backend: <code>cd backend &amp;&amp; uvicorn app.main:app --port 8000</code> — auto-ingests 600 docs on first run, probes gateway for embedding model</li>
+      <li>Open <code>frontend/index.html</code> in Chrome — health badge turns green when ready</li>
+    </ol>
+    The vector store persists between restarts (<code>embeddings.npy</code> + <code>documents.json</code>) — no re-ingestion needed unless <code>force_rebuild=true</code>. Note: <code>MAX_TOKENS=500</code> is a gateway hard cap — do not increase.
+  </div>
 
   <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 12</span></div>
 </div>

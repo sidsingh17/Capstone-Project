@@ -275,7 +275,7 @@
       </div>
       <div>
         <div class="cover-meta-label">Stack</div>
-        <div class="cover-meta-value">FastAPI · OpenAI GPT-4o · NumPy</div>
+        <div class="cover-meta-value">FastAPI 0.136 · GPT-4o-mini · text-embedding-3-small · NumPy</div>
       </div>
     </div>
   </div>
@@ -375,7 +375,7 @@ sequenceDiagram
     GR-->>API: sanitized query OR 400 Bad Request
 
     API->>EM: encode_single(query)
-    EM-->>API: query_embedding 384-dim
+    EM-->>API: query_embedding 1536-dim (OpenAI) or 384-dim (fallback)
 
     par Parallel Retrieval
         API->>BM: get_scores(tokenized_query)
@@ -402,7 +402,7 @@ sequenceDiagram
     <thead><tr><th>Component</th><th>Role in Flow</th><th>Key Detail</th></tr></thead>
     <tbody>
       <tr><td class="component">Guardrails</td><td>3-layer input validation</td><td>Length check · Injection regex · Domain keyword score ≥ 0.33</td></tr>
-      <tr><td class="component">EmbeddingModel</td><td>Query vectorisation</td><td>all-MiniLM-L6-v2 · 384-dim · L2-normalised</td></tr>
+      <tr><td class="component">EmbeddingModel</td><td>Query vectorisation</td><td>text-embedding-3-small (OpenAI, 1536-dim) · fallback: all-MiniLM-L6-v2 (384-dim) · L2-normalised</td></tr>
       <tr><td class="component">BM25 Index</td><td>Sparse keyword retrieval</td><td>BM25Okapi · k1=1.5 · b=0.75 · in-memory</td></tr>
       <tr><td class="component">VectorStore</td><td>Dense semantic retrieval</td><td>Numpy cosine similarity · metadata $where filter</td></tr>
       <tr><td class="component">HybridSearch RRF</td><td>Result fusion + reranking</td><td>fetch_k = top_k×3 · k=60 · field-boost reranker</td></tr>
@@ -429,7 +429,7 @@ sequenceDiagram
     recommendations. After hybrid search retrieves the top candidate incidents, a
     <strong>token budget manager</strong> (tiktoken cl100k_base) ensures the context fits within 8,000 tokens. A
     <strong>multi-dimensional risk scorer</strong> computes supplier, inventory, shipment, and demand risk. The
-    structured prompt and risk context are sent to <strong>OpenAI GPT-4o</strong>, whose output is parsed via regex
+    structured prompt and risk context are sent to <strong>OpenAI GPT-4o-mini</strong> (via keygateway), whose output is parsed via regex
     into five prioritised mitigation steps. Optionally, a <strong>LLM-as-Judge</strong> evaluates the recommendations
     across five quality dimensions.
   </p>
@@ -442,7 +442,7 @@ sequenceDiagram
   </div>
 
   <div class="diagram-box">
-    <div class="diagram-caption"><span>Fig 2.1</span> — Recommendation: Search → Token Budget → Risk Score → GPT-4o → Parse → Evaluate</div>
+    <div class="diagram-caption"><span>Fig 2.1</span> — Recommendation: Search → Token Budget → Risk Score → GPT-4o-mini → Parse → Evaluate</div>
     <div class="mermaid-wrap">
       <div class="mermaid">
 sequenceDiagram
@@ -453,7 +453,7 @@ sequenceDiagram
     participant HS as HybridSearch
     participant TC as TokenOptimizer
     participant RK as RiskScoring
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini
     participant EV as EvaluationService
 
     U->>FE: Submit disruption query
@@ -533,7 +533,7 @@ sequenceDiagram
     participant SA as SupplierRiskAgent
     participant SH as ShipmentAnalysisAgent
     participant IN as InventoryIntelAgent
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini
     participant RA as RecommendationAgent
 
     U->>OR: POST /agents/analyze query filters
@@ -592,16 +592,17 @@ sequenceDiagram
     The ingestion pipeline is triggered automatically at server startup if the vector store is empty, or manually
     via <code>POST /api/v1/ingest</code>. The pipeline is <strong>idempotent</strong> — it skips re-ingestion
     unless <code>force_rebuild=true</code>. The CSV is cleaned, enriched with computed risk scores, converted into
-    structured documents with <strong>tiktoken</strong> token counts, then embedded in batches of 64 using
-    <strong>all-MiniLM-L6-v2</strong> and upserted into the <strong>numpy-based vector store</strong>
+    structured documents with <strong>tiktoken</strong> token counts, then embedded in batches using the
+    <strong>OpenAI Embeddings API (text-embedding-3-small, 1536-dim)</strong> with automatic fallback to
+    <strong>sentence-transformers (all-MiniLM-L6-v2, 384-dim)</strong> if the gateway is unreachable, and upserted into the <strong>numpy-based vector store</strong>
     (persisted as <code>embeddings.npy</code> + <code>documents.json</code>). Finally, the
     <strong>BM25 index</strong> is rebuilt in-memory over the full corpus.
   </p>
 
   <div class="key-grid">
     <div class="key-card"><div class="label">Dataset</div><div class="value">600 synthetic supply chain incidents · CSV format · 16 fields</div></div>
-    <div class="key-card"><div class="label">Embedding Batch</div><div class="value">64 texts per batch · 100 docs per DB write · ~921 KB npy file</div></div>
-    <div class="key-card"><div class="label">Persistence</div><div class="value">documents.json + embeddings.npy in ./chroma_db/ directory</div></div>
+    <div class="key-card"><div class="label">Embedding Batch</div><div class="value">OpenAI text-embedding-3-small (1536-dim) primary · fallback: all-MiniLM-L6-v2 (384-dim) · 100 docs per DB write</div></div>
+    <div class="key-card"><div class="label">Persistence</div><div class="value">documents.json + embeddings.npy in ./chroma_sessions/ directory</div></div>
     <div class="key-card"><div class="label">Idempotency</div><div class="value">Upsert by incident_id · skip if count() &gt; 0 unless force_rebuild</div></div>
   </div>
 
@@ -644,8 +645,8 @@ sequenceDiagram
         CHK-->>PIP: 600 document dicts
 
         loop Every 100 documents
-            PIP->>EM: encode batch_size=64
-            EM-->>PIP: embeddings 100x384 float32
+            PIP->>EM: encode OpenAI API or ST fallback
+            EM-->>PIP: embeddings 100x1536 (OpenAI) or 100x384 (fallback) float32
             PIP->>VS: add_documents upsert by id
             VS-->>PIP: saved to numpy arrays
         end
@@ -681,7 +682,7 @@ sequenceDiagram
     <strong>5-tab SPA frontend</strong> through the <strong>FastAPI API layer</strong> to all backend services.
     Each frontend tab maps directly to one or more API endpoints. All user-facing endpoints pass through
     <strong>Guardrails</strong> before reaching the Core Services layer, which feeds the Business Services,
-    Multi-Agent System, and OpenAI GPT-4o. The Data Layer persists embeddings and incident records.
+    Multi-Agent System, and OpenAI GPT-4o-mini (via keygateway, SSL verification disabled for CA compatibility). The Data Layer persists embeddings and incident records.
   </p>
 
   <div class="diagram-box">
@@ -711,8 +712,8 @@ flowchart TD
     end
 
     subgraph CORE[Core Services]
-        EM[EmbeddingModel all-MiniLM-L6-v2]
-        VS[VectorStore Numpy Cosine]
+        EM[EmbeddingModel text-embedding-3-small\nfallback: all-MiniLM-L6-v2]
+        VS[VectorStore Pure-Numpy JSON\nCosine similarity]
         BM[BM25 Index BM25Okapi]
         HS[HybridSearch RRF alpha=0.5]
         TC[TokenOptimizer tiktoken]
@@ -733,7 +734,7 @@ flowchart TD
         RA[RecommendationAgent]
     end
 
-    LLM[OpenAI GPT-4o Function Calling]
+    LLM[OpenAI GPT-4o-mini Function Calling\nvia keygateway SSL off]
 
     subgraph DATA[Data Layer]
         CSV[(supply_chain_data.csv)]
@@ -963,9 +964,9 @@ flowchart TD
 
     subgraph POOL[ThreadPoolExecutor max_workers=3 timeout=60s]
         direction LR
-        SA[SupplierRiskAgent\nGPT-4o + tool use]
-        SH[ShipmentAnalysisAgent\nGPT-4o + tool use]
-        IN[InventoryIntelAgent\nGPT-4o + 2 tools]
+        SA[SupplierRiskAgent\nGPT-4o-mini + tool use]
+        SH[ShipmentAnalysisAgent\nGPT-4o-mini + tool use]
+        IN[InventoryIntelAgent\nGPT-4o-mini + 2 tools]
     end
 
     POOL --> COL[Collect AgentResult objects]
@@ -982,7 +983,7 @@ flowchart TD
     EXT --> SYN
     ESC -->|No| SYN
 
-    SYN[RecommendationAgent.analyze\nall findings as input] --> LLM[GPT-4o synthesize\nconsolidate + proactive alerts]
+    SYN[RecommendationAgent.analyze\nall findings as input] --> LLM[GPT-4o-mini synthesize\nconsolidate + proactive alerts]
     LLM --> CONS[consolidated_risk = weighted average\nS=0.35 SH=0.30 I=0.35]
     CONS --> DEDUP[Merge and deduplicate recommendations]
     DEDUP --> OUT([OrchestratorResponse\nescalation_chain proactive_alerts])

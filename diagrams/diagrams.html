@@ -131,7 +131,7 @@
       <div class="num">02</div>
       <span class="badge badge-seq">Sequence</span>
       <h4>Recommendation Generation</h4>
-      <p>Hybrid search → token budgeting → risk scoring → GPT-4o generation → optional LLM judge evaluation.</p>
+      <p>Hybrid search → token budgeting → risk scoring → GPT-4o-mini generation → optional LLM judge evaluation.</p>
     </div>
     <div class="overview-card" onclick="show('seq3')">
       <div class="num">03</div>
@@ -204,7 +204,7 @@ sequenceDiagram
     GR-->>API: valid / 400 Bad Request
 
     API->>EM: encode_single(query)
-    EM-->>API: query_embedding [384-dim]
+    EM-->>API: query_embedding [1536-dim or 384-dim fallback]
 
     par Parallel Retrieval
         API->>BM: get_scores(tokenized_query)
@@ -237,10 +237,10 @@ sequenceDiagram
 <section class="diagram-section" id="sec-seq2">
   <div class="section-header">
     <h2><span class="badge badge-seq">Sequence Diagram 2</span> Recommendation Generation Flow</h2>
-    <p>Covers the full RAG pipeline: search retrieval → token budget management → multi-dimensional risk scoring → GPT-4o generation with structured prompt → optional LLM-as-judge evaluation.</p>
+    <p>Covers the full RAG pipeline: search retrieval → token budget management → multi-dimensional risk scoring → GPT-4o-mini generation with structured prompt → optional LLM-as-judge evaluation.</p>
   </div>
   <div class="diagram-card">
-    <h3>Search → Token Budget → Risk Score → GPT-4o → Parse → Evaluate</h3>
+    <h3>Search → Token Budget → Risk Score → GPT-4o-mini → Parse → Evaluate</h3>
     <div class="mermaid-wrap">
       <div class="mermaid">
 sequenceDiagram
@@ -251,7 +251,7 @@ sequenceDiagram
     participant HS as HybridSearch
     participant TC as TokenOptimizer
     participant RK as RiskScoring
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini
     participant EV as EvaluationService
 
     U->>FE: Submit disruption query
@@ -308,7 +308,7 @@ sequenceDiagram
     participant SA as SupplierRiskAgent
     participant SH as ShipmentAnalysisAgent
     participant IN as InventoryIntelAgent
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini
     participant RA as RecommendationAgent
 
     U->>FE: Submit complex risk query
@@ -406,8 +406,8 @@ sequenceDiagram
         CHK-->>PIP: 600 document dicts
 
         loop Every 100 documents
-            PIP->>EM: encode(batch_texts, batch_size=64)
-            EM-->>PIP: embeddings [100 x 384 float32]
+            PIP->>EM: encode OpenAI API or ST fallback
+            EM-->>PIP: embeddings [100 x 1536 (OpenAI) or 100 x 384 (fallback) float32]
             PIP->>VS: add_documents(batch, embeddings)
             VS-->>PIP: upserted (upsert by incident_id)
         end
@@ -459,8 +459,8 @@ flowchart TD
     end
 
     subgraph CORE["Core Services"]
-        EM[EmbeddingModel\nall-MiniLM-L6-v2\n384-dim]
-        VS[VectorStore\nNumpy + JSON\nCosine similarity]
+        EM[EmbeddingModel\ntext-embedding-3-small 1536d\n(fallback: all-MiniLM 384d)]
+        VS[VectorStore\nPure-Numpy + JSON\n(embeddings.npy + documents.json)]
         BM[BM25 Index\nBM25Okapi]
         HS[HybridSearch\nRRF alpha=0.5]
         TC[TokenOptimizer\ntiktoken cl100k_base]
@@ -482,7 +482,7 @@ flowchart TD
         A2A{A2A Escalation\nrisk > 0.7}
     end
 
-    LLM[OpenAI GPT-4o\nchat.completions\nFunction Calling]
+    LLM[OpenAI GPT-4o-mini\nchat.completions\nFunction Calling]
 
     subgraph DATA["Data Layer"]
         CSV[(supply_chain_data.csv\n600 incidents)]
@@ -668,19 +668,19 @@ flowchart TD
         direction LR
         subgraph SRA["SupplierRiskAgent"]
             SA1[Build system + user messages]
-            SA2[GPT-4o + tool_use\nget_supplier_history]
+            SA2[GPT-4o-mini + tool_use\nget_supplier_history]
             SA3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
             SA1-->SA2-->SA3
         end
         subgraph SHA["ShipmentAnalysisAgent"]
             SH1[Build system + user messages]
-            SH2[GPT-4o + tool_use\nget_route_status]
+            SH2[GPT-4o-mini + tool_use\nget_route_status]
             SH3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
             SH1-->SH2-->SH3
         end
         subgraph INA["InventoryIntelAgent"]
             IN1[Build system + user messages]
-            IN2[GPT-4o + 2 tools\ncheck_inventory\nget_demand_forecast]
+            IN2[GPT-4o-mini + 2 tools\ncheck_inventory\nget_demand_forecast]
             IN3[Parse: RISK_SCORE\nFINDINGS RECS ESCALATE]
             IN1-->IN2-->IN3
         end
@@ -702,7 +702,7 @@ flowchart TD
     ESC -->|No| SYNTH
 
     SYNTH[RecommendationAgent.analyze\nall agent findings as input]
-    SYNTH --> LLM2[GPT-4o synthesize\nconsolidate resolve conflicts\nextract PROACTIVE_ALERTS]
+    SYNTH --> LLM2[GPT-4o-mini synthesize\nconsolidate resolve conflicts\nextract PROACTIVE_ALERTS]
     LLM2 --> CONS[consolidated_risk = weighted average\nS=0.35 SH=0.30 I=0.35]
     CONS --> DEDUP[Merge and deduplicate\nrecommendations by first 60 chars]
     DEDUP --> OUT([OrchestratorResponse\nagent_results consolidated_risk\nescalation_chain proactive_alerts])

@@ -1,4 +1,5 @@
 # AI-Powered Supply Chain Risk Intelligence Assistant
+**Current Stack:** Python 3.13 · FastAPI 0.136 · GPT-4o-mini · text-embedding-3-small · Pure-NumPy VectorStore · BM25 · IsolationForest
 ## Sequence Diagrams & Flowcharts
 
 ---
@@ -22,7 +23,7 @@ sequenceDiagram
     GR-->>API: ✅ valid / ❌ 400 Bad Request
 
     API->>EM: encode_single(query)
-    EM-->>API: query_embedding [384-dim]
+    EM-->>API: query_embedding [1536-dim or 384-dim]
 
     par Parallel Retrieval
         API->>BM: get_scores(tokenized_query)
@@ -57,7 +58,7 @@ sequenceDiagram
     participant HS as HybridSearch
     participant TC as TokenOptimizer
     participant RK as RiskScoring
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini\n(via keygateway, SSL off)
     participant EV as EvaluationService
 
     U->>FE: Submit disruption query
@@ -108,7 +109,7 @@ sequenceDiagram
     participant SA as SupplierRiskAgent
     participant SH as ShipmentAnalysisAgent
     participant IN as InventoryIntelAgent
-    participant LLM as OpenAI GPT-4o
+    participant LLM as OpenAI GPT-4o-mini\n(via keygateway, SSL off)
     participant RA as RecommendationAgent
 
     U->>FE: Submit complex risk query
@@ -204,8 +205,8 @@ sequenceDiagram
         CHK-->>PIP: documents[] (600 docs)
 
         loop Batches of 100
-            PIP->>EM: encode(batch_texts, batch_size=64)
-            EM-->>PIP: embeddings [100 × 384]
+            PIP->>EM: encode(batch_texts, OpenAI API or ST fallback)
+            EM-->>PIP: embeddings [100 × 1536 or 384]
             PIP->>VS: add_documents(batch, embeddings)
             VS-->>PIP: upserted to numpy store
         end
@@ -249,8 +250,8 @@ flowchart TD
     end
 
     subgraph CORE["Core Services"]
-        EM[EmbeddingModel\nall-MiniLM-L6-v2\n384-dim]
-        VS[VectorStore\nNumpy Cosine Search\n+ Metadata Filter]
+        EM[EmbeddingModel\ntext-embedding-3-small 1536d\n(fallback: all-MiniLM 384d)]
+        VS[VectorStore\nPure Numpy + JSON\nCosine similarity + meta filter]
         BM[BM25 Index\nBM25Okapi\nIn-Memory]
         HS[HybridSearch\nRRF Fusion α=0.5]
         TC[TokenOptimizer\ntiktoken cl100k_base]
@@ -272,7 +273,7 @@ flowchart TD
         A2A{A2A Escalation\nrisk > 0.7?}
     end
 
-    subgraph LLMBOX["OpenAI GPT-4o"]
+    subgraph LLMBOX["OpenAI GPT-4o-mini\n(via keygateway, SSL off)"]
         LLM[chat.completions.create\nFunction Calling\nSystem + User Prompts]
     end
 
@@ -331,7 +332,7 @@ flowchart TD
     subgraph PARALLEL["Parallel Retrieval (fetch_k = top_k × 3)"]
         direction LR
         BM25[BM25Okapi\nTokenize query\nget_scores over corpus]
-        SEM[Semantic Search\nEncode query → 384-dim\nCosine similarity ANN]
+        SEM[Semantic Search\nEncode query → 1536-dim (OpenAI) or 384-dim (fallback)\nCosine similarity ANN]
     end
 
     BM25 --> RRF
@@ -461,17 +462,17 @@ flowchart TD
         direction LR
         subgraph SA["SupplierRiskAgent"]
             SA1[Build messages]
-            SA2[GPT-4o call\n+ tool_use:\nget_supplier_history]
+            SA2[GPT-4o-mini call\n+ tool_use:\nget_supplier_history]
             SA3[Parse RISK_SCORE\nFINDINGS RECS]
         end
         subgraph SH["ShipmentAnalysisAgent"]
             SH1[Build messages]
-            SH2[GPT-4o call\n+ tool_use:\nget_route_status]
+            SH2[GPT-4o-mini call\n+ tool_use:\nget_route_status]
             SH3[Parse RISK_SCORE\nFINDINGS RECS]
         end
         subgraph IN["InventoryIntelAgent"]
             IN1[Build messages]
-            IN2[GPT-4o call\n+ tool_use:\ncheck_inventory\nget_forecast]
+            IN2[GPT-4o-mini call\n+ tool_use:\ncheck_inventory\nget_forecast]
             IN3[Parse RISK_SCORE\nFINDINGS RECS]
         end
     end
@@ -502,7 +503,7 @@ flowchart TD
 
     subgraph REC_AGENT["RecommendationAgent (synthesis)"]
         RA1[Serialize all agent findings]
-        RA2[GPT-4o call: synthesize\nconsolidate risks\nresolve conflicts\nproactive alerts]
+        RA2[GPT-4o-mini call: synthesize\nconsolidate risks\nresolve conflicts\nproactive alerts]
         RA3[Extract PROACTIVE_ALERTS]
     end
 

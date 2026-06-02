@@ -1,9 +1,9 @@
 # Technical Document
 # AI-Powered Supply Chain Risk Intelligence Assistant
 
-**Version:** 1.0.0  
-**Date:** 2026-05-30  
-**Stack:** Python 3.11 · FastAPI · OpenAI GPT-4o · ChromaDB · Sentence-Transformers · BM25 · DeepEval · scikit-learn
+**Version:** 1.1.0  
+**Date:** 2026-06-02  
+**Stack:** Python 3.13 · FastAPI 0.136 · OpenAI GPT-4o-mini · text-embedding-3-small · Pure-Numpy VectorStore · BM25 · DeepEval · scikit-learn
 
 ---
 
@@ -91,10 +91,10 @@ The AI-Powered Supply Chain Risk Intelligence Assistant is an end-to-end microse
        │                                               │
        ▼                                               ▼
 ┌────────────────────────┐              ┌──────────────────────────────────┐
-│    VECTOR STORE        │              │   OPENAI GPT-4o (LLM)            │
-│    ChromaDB            │              │   - Recommendation generation    │
-│    all-MiniLM-L6-v2    │              │   - Multi-agent reasoning        │
-│    BM25 Index          │              │   - LLM-as-judge evaluation      │
+│   NUMPY VECTOR STORE   │              │   OPENAI GPT-4o-mini (via GW)    │
+│   embeddings.npy       │              │   - Recommendation generation    │
+│   documents.json       │              │   - Multi-agent tool use         │
+│   BM25 Index           │              │   - LLM-as-judge evaluation      │
 └────────────┬───────────┘              └──────────────────────────────────┘
              │
              ▼
@@ -130,7 +130,7 @@ User Query
 [6] Prompt Assembly (system prompt + risk context + user query)
     │
     ▼
-[7] OpenAI GPT-4o Call (chat.completions.create)
+[7] OpenAI GPT-4o-mini Call (chat.completions, max_tokens=500)
     │  raw LLM response
     ▼
 [8] Response Parsing (extract recommendations, summary)
@@ -185,20 +185,21 @@ OrchestratorResponse → API → Frontend
 
 | Component | Library | Version | Purpose |
 |---|---|---|---|
-| Web Framework | FastAPI | 0.115.0 | REST API, OpenAPI docs, async support |
-| ASGI Server | Uvicorn | 0.30.6 | Production ASGI server with workers |
-| LLM Provider | OpenAI | 1.55.3 | GPT-4o for generation and agent reasoning |
-| Vector Database | ChromaDB | 0.5.20 | Persistent cosine-similarity vector store |
-| Embedding Model | Sentence-Transformers | 3.3.1 | `all-MiniLM-L6-v2` dense embeddings |
-| Keyword Search | rank-bm25 | 0.2.2 | BM25Okapi sparse retrieval |
-| Data Processing | Pandas / NumPy | 2.2.3 / 1.26.4 | CSV ingestion, feature engineering |
-| Anomaly Detection | scikit-learn | 1.5.2 | IsolationForest, StandardScaler |
-| Evaluation | DeepEval | 1.4.4 | RAG quality metrics (relevancy, faithfulness) |
+| Web Framework | FastAPI | 0.136.3 | REST API, OpenAPI docs (upgraded for starlette 1.x compat) |
+| ASGI Server | Uvicorn | 0.30.6 | Production ASGI server |
+| LLM Provider | OpenAI SDK | 1.55.3 | GPT-4o-mini via custom gateway (SSL-disabled client) |
+| Vector Store | Pure NumPy | 2.2.3 | `embeddings.npy` + `documents.json` — no C++ build tools |
+| Embedding — Primary | OpenAI API | — | `text-embedding-3-small` · 1536-dim · via gateway |
+| Embedding — Fallback | Sentence-Transformers | 3.3.1 | `all-MiniLM-L6-v2` · 384-dim · local · auto-probe fallback |
+| Keyword Search | rank-bm25 | 0.2.2 | BM25Okapi sparse retrieval, in-memory |
+| Data Processing | Pandas / NumPy | 2.2.3 / 2.2.3 | CSV ingestion, feature engineering |
+| Anomaly Detection | scikit-learn | 1.6.1 | IsolationForest, StandardScaler |
+| Evaluation | DeepEval | optional | RAG quality metrics (graceful placeholder if absent) |
 | Schema Validation | Pydantic v2 | 2.9.2 | Request/response models, field validation |
-| Configuration | pydantic-settings | 2.6.1 | `.env` file loading via `BaseSettings` |
-| Token Counting | tiktoken | 0.8.0 | `cl100k_base` tokenizer for GPT-4 |
+| Configuration | pydantic-settings | 2.6.1 | `.env` loading + `make_openai_client()` factory |
+| Token Counting | tiktoken | 0.8.0 | `cl100k_base` tokenizer, context budget management |
 | Synthetic Data | Faker | 30.3.0 | Dataset generation utilities |
-| Testing | pytest + pytest-asyncio | 8.3.3 | Unit and integration tests |
+| Testing | pytest | 8.3.3 | Unit tests — no API key needed (mocked LLM calls) |
 
 ### Frontend
 
@@ -335,13 +336,15 @@ CSV file
    ├── dataframe_to_documents() → List[{id, content, metadata}]
    │
    └── Batch ingestion (100 docs/batch)
-       ├── encode(texts)    → embeddings via SentenceTransformer
-       └── add_documents()  → upsert to ChromaDB
+       ├── encode(texts)    → embeddings via OpenAI API (or ST fallback)
+       └── add_documents()  → upsert to numpy vector store
 ```
 
-**Idempotency:** Ingestion checks `vector_store.count() > 0` before running. Use `force_rebuild=True` to re-index from scratch (deletes and recreates the ChromaDB collection).
+**Idempotency:** Ingestion checks `vector_store.count() > 0` before running. Use `force_rebuild=True` to re-index from scratch.
 
 **Startup auto-ingestion:** `main.py` lifespan hook calls `pipeline.ingest()` on server start if the store is empty.
+
+**Embedding model change detection:** `VectorStore` stores `store_meta.json` with the active model name and dimension. On startup, if the stored model/dimension doesn't match the configured model, the store is automatically cleared and re-indexed.
 
 ---
 
@@ -349,59 +352,61 @@ CSV file
 
 ### 5.1 Embedding Model
 
-**File:** `backend/app/core/embeddings.py`  
-**Model:** `all-MiniLM-L6-v2` (Sentence-Transformers)
+**File:** `backend/app/core/embeddings.py`
 
-| Property | Value |
-|---|---|
-| Embedding dimension | 384 |
-| Max sequence length | 256 tokens |
-| Inference speed | ~14,000 sentences/second on CPU |
-| Model size | ~80 MB |
-| Normalization | L2-normalized (cosine = dot product) |
+The embedding model uses an **auto-probe + fallback** strategy at startup:
 
-**Singleton pattern:** `EmbeddingModel` uses `__new__` to ensure a single model instance per process, avoiding repeated disk loads during the request lifecycle.
+```
+Startup
+  │
+  ├─ Probe: call OpenAI /embeddings with ["probe"]
+  │   ├─ Success → use text-embedding-3-small  (1536-dim, via gateway)
+  │   └─ Failure → load all-MiniLM-L6-v2 locally  (384-dim, no API needed)
+```
 
-**Batched encoding:** Documents are encoded in batches of 64 to optimize CPU/GPU utilization during ingestion.
+| Property | Primary (OpenAI) | Fallback (SentenceTransformers) |
+|---|---|---|
+| Model | `text-embedding-3-small` | `all-MiniLM-L6-v2` |
+| Dimension | 1536 | 384 |
+| Source | OpenAI API via gateway | Local disk (~80 MB) |
+| Batch size | 100 texts/request | 64 texts/CPU batch |
+| Normalisation | L2 (client-side) | L2 (normalize_embeddings=True) |
 
-### 5.2 Vector Store (ChromaDB)
+**Gateway SSL:** `make_openai_client()` passes `httpx.Client(verify=False)` when `OPENAI_BASE_URL` is set — necessary for corporate/educational gateways whose TLS certificate is signed by a non-public CA (`certifi` does not trust it, but the system curl store does).
+
+**Singleton pattern:** `EmbeddingModel` uses `__new__` — the probe runs exactly once per process, then `_initialised = True` prevents re-running.
+
+### 5.2 Vector Store (Pure NumPy)
 
 **File:** `backend/app/core/vector_store.py`
 
-ChromaDB is used as a persistent, embedded vector database (no external server required).
+The vector store is implemented entirely in NumPy — no C++ build tools required (ChromaDB was replaced due to Python 3.13 + Windows MSVC compilation constraints).
 
-**Configuration:**
+**Persistence:**
 ```
-Distance metric: cosine (HNSW index)
-Persistence: ./chroma_db/ (configurable via CHROMA_PERSIST_DIRECTORY)
-Collection: supply_chain_incidents (configurable)
-```
-
-**HNSW parameters (ChromaDB defaults):**
-```
-M = 16            (number of bidirectional links per node)
-ef_construction = 100  (search width during construction)
-ef = 10           (search width at query time)
+./chroma_db/
+  ├── embeddings.npy      # float32 array [N × D]
+  ├── documents.json      # list of {id, content, metadata}
+  └── store_meta.json     # {"embedding_model": "text-embedding-3-small"}
 ```
 
-**Metadata filtering (`build_where_filter`):**
-
-ChromaDB supports structured `$where` filters using operators `$eq`, `$and`, `$or`. The system builds these filters from API query parameters:
-
+**Cosine similarity (batch):**
 ```python
-# Single filter
-{"supplier_id": {"$eq": "S003"}}
-
-# Combined filter
-{"$and": [
-    {"severity": {"$eq": "critical"}},
-    {"warehouse_location": {"$eq": "Chicago, IL"}}
-]}
+q_norm = q / (||q|| + ε)
+embs_normed = embs / (||embs|| + ε)
+scores = embs_normed @ q_norm   # vectorised dot product
 ```
 
-Filters are applied at the ANN (Approximate Nearest Neighbor) layer, reducing the candidate set before scoring.
+**Model compatibility guard (`_check_model_compatibility`):**
+Two-step check on every startup:
+1. Model name: `store_meta.json["embedding_model"]` vs `settings.EMBEDDING_MODEL`
+2. Dimension: `embeddings.npy.shape[1]` vs known dims (`text-embedding-3-small=1536`, `all-MiniLM-L6-v2=384`)
 
-**Upsert semantics:** `collection.upsert()` ensures re-ingestion is idempotent — existing documents are updated, not duplicated.
+If either mismatches → all store files deleted → server triggers re-ingestion on next request.
+
+**Metadata filtering:** Python-native `$eq`, `$ne`, `$and`, `$or` operators — same interface as the original ChromaDB `$where` syntax, applied as list comprehension over `documents.json`.
+
+**Upsert semantics:** `add_documents()` checks `_id_to_idx` — existing documents are overwritten in-place; new documents are appended.
 
 ### 5.3 Hybrid Search Engine
 
@@ -865,7 +870,7 @@ Four standard RAG evaluation metrics are computed via DeepEval when `evaluate_qu
 | **Contextual Precision** | Are retrieved documents relevant to the ground truth? | 0.5 |
 | **Contextual Recall** | Does the retrieved context cover all necessary information? | 0.5 |
 
-DeepEval uses the configured LLM (GPT-4o) as the judge for these metrics internally.
+DeepEval uses the configured LLM (GPT-4o-mini) as the judge internally. It is an **optional dependency** — if not installed or configured, the system returns placeholder scores (0.70–0.80) without failing.
 
 **Graceful degradation:** If DeepEval is not configured (missing `OPENAI_API_KEY` in DeepEval's internal config), the service returns placeholder scores with a note rather than failing.
 
@@ -1124,18 +1129,17 @@ The header health badge polls `GET /health` every 30 seconds and updates to refl
 
 ## 12. Design Decisions & Trade-offs
 
-### 12.1 Vector Database: ChromaDB vs. Pinecone/Weaviate
+### 12.1 Vector Store: Pure NumPy vs. ChromaDB vs. Pinecone
 
-| Factor | ChromaDB | Pinecone/Weaviate |
-|---|---|---|
-| Setup | Embedded, no server | Managed cloud or self-hosted |
-| Cost | Free, open source | Cloud costs for scale |
-| Latency | Low (in-process) | Network round-trip |
-| Scale | ~1M docs on disk | Billions of vectors |
-| Persistence | Local disk | Cloud-managed |
-| **Decision** | **Chosen** | Future migration path |
+| Factor | Pure NumPy (chosen) | ChromaDB | Pinecone |
+|---|---|---|---|
+| Setup | Zero dependencies | Requires C++ build tools (MSVC on Windows) | Managed cloud |
+| Python 3.13 compat | Yes — no native code | No — `chroma-hnswlib` has no Py 3.13 wheel | Yes |
+| Persistence | `.npy` + `.json` | SQLite + HNSW binary | Cloud API |
+| Scale | ~100K docs (RAM) | ~1M docs on disk | Billions of vectors |
+| **Decision** | **Chosen** | Blocked by build tool constraint | Future production path |
 
-**Rationale:** ChromaDB is ideal for development and moderate-scale deployments (< 1M documents). The `VectorStore` abstraction layer makes swapping to Pinecone a single-file change.
+**Rationale:** ChromaDB's `chroma-hnswlib` C++ extension has no pre-built wheel for Python 3.13 on Windows, and `MSVC` was not available in the target environment. The `VectorStore` interface is fully abstracted — swapping to ChromaDB or Pinecone requires changing only `vector_store.py`.
 
 ### 12.2 Chunking Strategy: Row-per-Document vs. Sliding Window
 
@@ -1167,15 +1171,29 @@ The header health badge polls `GET /health` every 30 seconds and updates to refl
 
 **Rationale:** The OpenAI client is synchronous. `ThreadPoolExecutor` achieves effective parallelism for I/O-bound LLM calls (threads block on network, not CPU), providing the 3x speedup needed without rewriting all agents as async.
 
-### 12.5 LLM Model: GPT-4o
+### 12.5 LLM Model: GPT-4o-mini via Gateway
 
 | Aspect | Decision |
 |---|---|
-| Model | `gpt-4o` (configurable via `LLM_MODEL` env var) |
-| Context window | 128K tokens (generous for supply chain documents) |
-| Function calling | Native support, used by all agents |
-| Temperature | Default (1.0) — responses vary appropriately for risk narrative |
-| Max tokens | 4096 (recommendations) / 1500 (agents) / 2000 (orchestrator) |
+| Model | `gpt-4o-mini` (configurable via `LLM_MODEL` env var) |
+| Gateway | `https://keygateway.arshnivlabs.com/v1` (educational proxy) |
+| API key | `learner039` (gateway key, not direct OpenAI) |
+| Context window | 128K tokens |
+| Function calling | Native OpenAI tool-use format (all agents) |
+| Max tokens | **500** — hard gateway limit; configurable via `MAX_TOKENS` |
+| SSL | `httpx.Client(verify=False)` injected via `make_openai_client()` — gateway cert not in `certifi` bundle |
+
+**`make_openai_client()` factory** centralises the base_url + SSL logic so no duplication across rag_service, evaluation_service, and all agents.
+
+### 12.6 Embedding: OpenAI API with Sentence-Transformers Fallback
+
+| Aspect | Decision |
+|---|---|
+| Primary | `text-embedding-3-small` via OpenAI API (1536-dim) |
+| Fallback | `all-MiniLM-L6-v2` via sentence-transformers (384-dim, local) |
+| Trigger | Gateway `/embeddings` returns 404 or connection error |
+| Probe | One test embedding call during `EmbeddingModel.__init__` |
+| Dimension guard | `VectorStore` auto-detects model/dim change and rebuilds |
 
 ### 12.6 Evaluation: DeepEval + Custom LLM Judge
 
@@ -1239,18 +1257,20 @@ docker-compose up --build     # builds backend, serves frontend via Nginx
 
 | Variable | Default | Required | Description |
 |---|---|---|---|
-| `OPENAI_API_KEY` | — | **Yes** | OpenAI API key |
-| `LLM_MODEL` | `gpt-4o` | No | OpenAI model name |
-| `CHROMA_PERSIST_DIRECTORY` | `./chroma_db` | No | ChromaDB storage path |
-| `CHROMA_COLLECTION_NAME` | `supply_chain_incidents` | No | Collection name |
-| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | No | HuggingFace model name |
-| `TOP_K_RESULTS` | `10` | No | Default search results |
-| `HYBRID_ALPHA` | `0.5` | No | Semantic weight in RRF |
-| `MAX_TOKENS` | `4096` | No | Max LLM output tokens |
-| `MAX_CONTEXT_TOKENS` | `8000` | No | RAG context budget |
-| `DATA_PATH` | `./data/supply_chain_data.csv` | No | Dataset file path |
-| `ANOMALY_CONTAMINATION` | `0.05` | No | IsolationForest contamination |
-| `DEBUG` | `false` | No | Enable debug logging |
+| `OPENAI_API_KEY` | — | **Yes** | OpenAI API key or gateway learner key |
+| `OPENAI_BASE_URL` | `None` | No | Custom gateway URL — SSL verify auto-disabled when set |
+| `LLM_MODEL` | `gpt-4o-mini` | No | OpenAI model for chat completions |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | No | OpenAI embedding model (falls back to ST if endpoint unavailable) |
+| `MAX_TOKENS` | `500` | No | Max LLM output tokens — set ≤ 500 for educational gateways |
+| `CHROMA_PERSIST_DIRECTORY` | `./chroma_db` | No | Numpy vector store persist path |
+| `CHROMA_BASE_DIR` | `./chroma_sessions` | No | Session-scoped store root |
+| `CHROMA_COLLECTION_NAME` | `supply_chain_incidents` | No | Logical collection name |
+| `TOP_K_RESULTS` | `10` | No | Default search top-k |
+| `HYBRID_ALPHA` | `0.5` | No | Semantic weight in RRF (0=BM25 only, 1=semantic only) |
+| `MAX_CONTEXT_TOKENS` | `8000` | No | RAG context budget (tiktoken-counted) |
+| `DATA_PATH` | `./data/supply_chain_data.csv` | No | Dataset CSV path |
+| `ANOMALY_CONTAMINATION` | `0.05` | No | IsolationForest expected anomaly fraction |
+| `DEBUG` | `false` | No | Enable verbose debug logging |
 
 ### 13.4 Running Tests
 
