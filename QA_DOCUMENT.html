@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q&A Document — AI-Powered Supply Chain Risk Intelligence Assistant</title>
+  <style>
+    :root {
+      --accent: #1a56db;
+      --accent-light: #e8f0fe;
+      --accent2: #6d28d9;
+      --accent2-light: #ede9fe;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --surface: #f9fafb;
+      --success: #065f46;
+      --success-bg: #d1fae5;
+      --warn: #92400e;
+      --warn-bg: #fef3c7;
+      --danger: #991b1b;
+      --danger-bg: #fee2e2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      font-size: 11pt;
+      line-height: 1.7;
+      color: var(--text);
+      background: #e5e7eb;
+    }
+
+    /* ── Page Shell ─────────────────────────────────────── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #fff;
+      margin: 12mm auto;
+      padding: 18mm 22mm 16mm;
+      box-shadow: 0 4px 32px rgba(0,0,0,.18);
+      position: relative;
+      page-break-after: always;
+    }
+
+    /* ── Cover ───────────────────────────────────────────── */
+    .cover { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 261mm; }
+    .cover-icon { font-size: 52pt; margin-bottom: 10mm; }
+    .cover-tag { display: inline-block; padding: 3px 14px; border: 1.5px solid var(--accent); border-radius: 20px; color: var(--accent); font-size: 9pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6mm; }
+    .cover h1 { font-size: 22pt; font-weight: 900; line-height: 1.25; margin-bottom: 3mm; max-width: 150mm; }
+    .cover h2 { font-size: 12pt; font-weight: 400; color: var(--muted); margin-bottom: 10mm; }
+    .cover-bar { width: 70mm; height: 3px; background: linear-gradient(90deg,#1a56db,#6d28d9); border-radius: 2px; margin: 6mm auto; }
+    .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 10mm; text-align: left; border: 1px solid var(--border); border-radius: 8px; padding: 7mm 9mm; background: var(--surface); width: 130mm; margin-top: 10mm; }
+    .cg-label { font-size: 7.5pt; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .cg-val { font-size: 9.5pt; font-weight: 600; }
+    .cover-foot { position: absolute; bottom: 12mm; left: 0; right: 0; text-align: center; font-size: 8pt; color: var(--muted); }
+
+    /* ── TOC ─────────────────────────────────────────────── */
+    .toc-h { font-size: 17pt; font-weight: 800; border-bottom: 2px solid var(--accent); padding-bottom: 3mm; margin-bottom: 7mm; }
+    .toc-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2.5mm 0 2.5mm 4mm; border-bottom: 1px dotted var(--border); font-size: 9.5pt; }
+    .toc-row:hover { background: var(--accent-light); border-radius: 4px; }
+    .toc-num { color: var(--accent); font-weight: 700; min-width: 8mm; }
+    .toc-name { flex: 1; }
+    .toc-tag { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 7pt; font-weight: 700; margin-left: 5px; }
+    .tag-eval { background: #dbeafe; color: #1d4ed8; }
+    .toc-pg { color: var(--muted); font-size: 9pt; min-width: 12mm; text-align: right; }
+
+    /* ── Section Header ──────────────────────────────────── */
+    .sec-head { margin-bottom: 6mm; padding-bottom: 3mm; border-bottom: 2px solid var(--accent); }
+    .sec-num { font-size: 8.5pt; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1mm; }
+    .sec-title { font-size: 15pt; font-weight: 800; line-height: 1.2; margin-bottom: 2mm; }
+    .sec-desc { font-size: 9.5pt; color: var(--muted); line-height: 1.6; }
+
+    /* ── Q&A Card ────────────────────────────────────────── */
+    .qa-card { margin-bottom: 7mm; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .qa-q {
+      background: var(--accent); color: #fff;
+      padding: 3.5mm 5mm; font-size: 10pt; font-weight: 700;
+      display: flex; align-items: flex-start; gap: 3mm;
+    }
+    .qa-q-icon { background: rgba(255,255,255,.25); border-radius: 50%; width: 6mm; height: 6mm; display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 900; flex-shrink: 0; margin-top: .3mm; }
+    .qa-a { padding: 4mm 5mm; font-size: 9.5pt; line-height: 1.75; }
+    .qa-a strong { color: var(--accent); }
+    .qa-a code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 3px; padding: 0 3px; font-family: 'Courier New', monospace; font-size: 8.5pt; color: #1e3a5f; }
+    .qa-a ul, .qa-a ol { margin: 2mm 0 2mm 6mm; }
+    .qa-a li { margin-bottom: 1mm; }
+
+    /* ── Highlight Boxes ─────────────────────────────────── */
+    .hbox { border-radius: 6px; padding: 3mm 5mm; margin: 3mm 0; font-size: 9.5pt; line-height: 1.6; }
+    .hbox-blue { background: var(--accent-light); border-left: 3px solid var(--accent); }
+    .hbox-purple { background: var(--accent2-light); border-left: 3px solid var(--accent2); }
+    .hbox-green { background: var(--success-bg); border-left: 3px solid #059669; }
+    .hbox-warn { background: var(--warn-bg); border-left: 3px solid #d97706; }
+    .hbox strong { color: inherit; }
+    .hbox-blue strong { color: var(--accent); }
+    .hbox-purple strong { color: var(--accent2); }
+    .hbox-green strong { color: var(--success); }
+
+    /* ── Inline Table ────────────────────────────────────── */
+    .tbl { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 3mm 0; }
+    .tbl th { background: var(--accent); color: #fff; padding: 2mm 3.5mm; text-align: left; font-size: 8.5pt; font-weight: 700; }
+    .tbl td { padding: 2mm 3.5mm; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .tbl tr:nth-child(even) td { background: var(--surface); }
+    .tbl .mono { font-family: 'Courier New', monospace; font-size: 8pt; color: #1e3a5f; }
+
+    /* ── Score / Metric Pills ────────────────────────────── */
+    .pill { display: inline-block; padding: 1.5px 7px; border-radius: 20px; font-size: 8pt; font-weight: 700; margin: 1px 2px; }
+    .pill-blue { background: #dbeafe; color: #1d4ed8; }
+    .pill-purple { background: #ede9fe; color: #6d28d9; }
+    .pill-green { background: #d1fae5; color: #065f46; }
+    .pill-orange { background: #fef3c7; color: #92400e; }
+    .pill-red { background: #fee2e2; color: #991b1b; }
+
+    /* ── Page Footer ─────────────────────────────────────── */
+    .pg-foot { position: absolute; bottom: 10mm; left: 22mm; right: 22mm; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); border-top: 1px solid var(--border); padding-top: 2.5mm; }
+
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; width: 100%; page-break-after: always; }
+    }
+    @page { size: A4; margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ COVER ═════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-icon">⬡</div>
+    <div class="cover-tag">Questions &amp; Answers — Evaluation Document</div>
+    <h1>AI-Powered Supply Chain<br/>Risk Intelligence Assistant</h1>
+    <h2>Panel Evaluation Q&amp;A — All 10 Criteria</h2>
+    <div class="cover-bar"></div>
+    <div class="cover-grid">
+      <div><div class="cg-label">Document Type</div><div class="cg-val">Evaluation Q&amp;A Reference</div></div>
+      <div><div class="cg-label">Version</div><div class="cg-val">1.0.0</div></div>
+      <div><div class="cg-label">Total Criteria</div><div class="cg-val">10 Evaluation Sections</div></div>
+      <div><div class="cg-label">Total Questions</div><div class="cg-val">40+ Detailed Q&amp;As</div></div>
+      <div><div class="cg-label">Stack</div><div class="cg-val">FastAPI · OpenAI GPT-4o · NumPy</div></div>
+      <div><div class="cg-label">Repository</div><div class="cg-val">sidsingh17/Capstone-Project</div></div>
+      <div><div class="cg-label">Date</div><div class="cg-val">June 2026</div></div>
+      <div><div class="cg-label">Author</div><div class="cg-val">Siddharth SR</div></div>
+    </div>
+  </div>
+  <div class="cover-foot">AI-Powered Supply Chain Risk Intelligence Assistant &nbsp;|&nbsp; Evaluation Q&amp;A Document &nbsp;|&nbsp; Confidential</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ TOC ══════════════════════ -->
+<div class="page">
+  <div class="toc-h">Table of Contents</div>
+  <div class="toc-row"><span class="toc-num">1</span><span class="toc-name">Problem Understanding &amp; Domain Alignment <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">3</span></div>
+  <div class="toc-row"><span class="toc-num">2</span><span class="toc-name">Data Engineering &amp; Processing <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">4</span></div>
+  <div class="toc-row"><span class="toc-num">3</span><span class="toc-name">RAG &amp; Retrieval Quality <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">5</span></div>
+  <div class="toc-row"><span class="toc-num">4</span><span class="toc-name">Agentic AI Design <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">6</span></div>
+  <div class="toc-row"><span class="toc-num">5</span><span class="toc-name">Recommendation / Intelligence Quality <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">7</span></div>
+  <div class="toc-row"><span class="toc-num">6</span><span class="toc-name">System Design &amp; Architecture <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">8</span></div>
+  <div class="toc-row"><span class="toc-num">7</span><span class="toc-name">Evaluation Framework <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">9</span></div>
+  <div class="toc-row"><span class="toc-num">8</span><span class="toc-name">Dashboard / User Experience <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">10</span></div>
+  <div class="toc-row"><span class="toc-num">9</span><span class="toc-name">Code Quality &amp; Documentation <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">11</span></div>
+  <div class="toc-row"><span class="toc-num">10</span><span class="toc-name">Demo &amp; Presentation <span class="toc-tag tag-eval">Evaluation</span></span><span class="toc-pg">12</span></div>
+
+  <div style="margin-top:8mm">
+    <div style="font-size:11pt;font-weight:800;border-bottom:2px solid var(--accent);padding-bottom:3mm;margin-bottom:5mm;">Evaluation Criteria Overview</div>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Criteria</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">01</td><td><strong>Problem Understanding</strong></td><td>Clarity of business problem and domain relevance</td></tr>
+        <tr><td class="mono">02</td><td><strong>Data Engineering</strong></td><td>Dataset usage, preprocessing, metadata extraction, chunking strategy</td></tr>
+        <tr><td class="mono">03</td><td><strong>RAG &amp; Retrieval Quality</strong></td><td>Hybrid search, semantic retrieval, relevance of retrieved information</td></tr>
+        <tr><td class="mono">04</td><td><strong>Agentic AI Design</strong></td><td>Multi-agent architecture and agent orchestration quality</td></tr>
+        <tr><td class="mono">05</td><td><strong>Recommendation Quality</strong></td><td>Root cause analysis, prediction quality, recommendation explainability</td></tr>
+        <tr><td class="mono">06</td><td><strong>System Design</strong></td><td>Microservice design, scalability, API design, modularity</td></tr>
+        <tr><td class="mono">07</td><td><strong>Evaluation Framework</strong></td><td>DeepEval, LLM-as-judge, validation methodology</td></tr>
+        <tr><td class="mono">08</td><td><strong>Dashboard / UX</strong></td><td>Front-end usability and operational visibility</td></tr>
+        <tr><td class="mono">09</td><td><strong>Code Quality</strong></td><td>Code structure, readability, README, maintainability</td></tr>
+        <tr><td class="mono">10</td><td><strong>Demo &amp; Presentation</strong></td><td>Solution explanation, demo execution, Q&amp;A handling</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 2</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 1. PROBLEM UNDERSTANDING ═════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 01</div>
+    <div class="sec-title">Problem Understanding &amp; Domain Alignment</div>
+    <div class="sec-desc">Clarity of business problem and domain relevance</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What is the core business problem this system addresses?</div>
+    <div class="qa-a">Supply chain managers across global operations face a critical intelligence gap — operational risk data is scattered across procurement systems, shipment records, warehouse platforms, and vendor reports. Manually consolidating this information is time-intensive and reactive. The system solves this by enabling operations teams to:
+      <ul>
+        <li>Query historical supply chain incidents using <strong>natural language</strong> (no SQL, no dashboards)</li>
+        <li>Automatically surface similar past disruptions through <strong>semantic retrieval</strong></li>
+        <li>Receive AI-generated, <strong>explainable mitigation recommendations</strong> within seconds</li>
+        <li>Detect anomalies and proactively flag emerging risk patterns before disruption occurs</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>Which real-world supply chain scenarios does the system handle?</div>
+    <div class="qa-a">The system directly addresses the five key disruption patterns stated in the problem statement:
+      <table class="tbl" style="margin-top:3mm">
+        <thead><tr><th>Business Scenario</th><th>System Capability</th></tr></thead>
+        <tbody>
+          <tr><td>"Supplier delivery delays increasing"</td><td>Supplier Risk Agent + semantic search over delay incidents</td></tr>
+          <tr><td>"Port congestion impacting schedules"</td><td>Shipment Analysis Agent + hybrid search on port/transit records</td></tr>
+          <tr><td>"Inventory approaching stockout"</td><td>Inventory Intelligence Agent + stockout risk scoring</td></tr>
+          <tr><td>"Transportation costs spiked unexpectedly"</td><td>Anomaly detection flags cost outliers; demand risk dimension</td></tr>
+          <tr><td>"Demand spikes causing fulfillment bottlenecks"</td><td>Inventory agent demand-vs-supply gap analysis</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does the system go beyond traditional threshold-based monitoring?</div>
+    <div class="qa-a">Traditional systems trigger alerts when a metric crosses a fixed threshold (e.g., delay &gt; 5 days). This system advances beyond that in three ways:
+      <ol>
+        <li><strong>Semantic understanding:</strong> Natural language queries find conceptually similar incidents — not just keyword matches. "Component shortage causing production risk" retrieves supplier delays, quality issues, and demand spikes.</li>
+        <li><strong>Contextual risk scoring:</strong> Risk is computed across four correlated dimensions simultaneously — a single late shipment is LOW risk, but when combined with low inventory and a forecasted demand spike, it becomes CRITICAL.</li>
+        <li><strong>Proactive intelligence:</strong> IsolationForest detects anomalous operational patterns before they become disruptions, and the Recommendation Agent generates forward-looking proactive alerts.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="hbox hbox-blue"><strong>Domain Alignment:</strong> The system is designed around the actual workflow of an operations manager — from noticing a problem ("supplier delays increasing"), to querying the system conversationally, to receiving a ranked list of similar historical incidents with specific, actionable mitigation steps tied to real owners and timelines.</div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 3</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 2. DATA ENGINEERING ══════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 02</div>
+    <div class="sec-title">Data Engineering &amp; Processing</div>
+    <div class="sec-desc">Dataset usage, preprocessing, metadata extraction, chunking strategy</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What dataset is used and what does it contain?</div>
+    <div class="qa-a">The system uses <strong>Supply Chain Logistics Dataset</strong> (<code>supply_chain_data.csv</code>) — 600 synthetic supply chain incident records spanning January 2024 to May 2026. It contains 16 fields including:
+      <span class="pill pill-blue">supplier_id (S001–S020)</span>
+      <span class="pill pill-blue">warehouse_location (12 US cities)</span>
+      <span class="pill pill-blue">shipment_status</span>
+      <span class="pill pill-orange">delivery_delay (days)</span>
+      <span class="pill pill-orange">inventory_level (units)</span>
+      <span class="pill pill-orange">transportation_cost (USD)</span>
+      <span class="pill pill-purple">incident_type (8 types)</span>
+      <span class="pill pill-purple">severity (4 levels)</span>
+      <span class="pill pill-green">incident_description (RAG text field)</span>
+      <br/><br/>The dataset is generated using a probabilistic simulator (<code>generate_sample.py</code>) that replicates real supply chain disruption distributions — e.g., exponential delay distributions, correlated inventory-demand patterns.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is data preprocessed before indexing?</div>
+    <div class="qa-a">The preprocessing pipeline (<code>preprocessing.py</code>) executes five steps:
+      <ol>
+        <li><strong>Type coercion:</strong> <code>pd.to_numeric(..., errors='coerce').fillna(0)</code> for numeric fields</li>
+        <li><strong>String normalisation:</strong> Strip whitespace, fill nulls with "Unknown" for categorical fields</li>
+        <li><strong>Deduplication:</strong> Remove duplicate rows by <code>incident_id</code></li>
+        <li><strong>Timestamp parsing:</strong> Convert to <code>YYYY-MM-DD</code> string for metadata consistency</li>
+        <li><strong>Feature enrichment:</strong> Computed fields added — <code>risk_score</code> (row-level 0–1 score), <code>inventory_turnover</code> (inventory ÷ order_qty), <code>delay_ratio</code> (delay ÷ resolution_time)</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What is the chunking strategy and why was it chosen?</div>
+    <div class="qa-a">The system uses a <strong>row-per-document</strong> strategy — each CSV row becomes exactly one structured document. The document content combines the natural language description with structured metadata fields:
+      <div class="hbox hbox-warn" style="margin-top:3mm;font-size:8.5pt;font-family:'Courier New',monospace">
+        [incident_description]. Incident Type: [type]. Supplier: [id]. Warehouse: [location]. Region: [region]. Status: [status]. Severity: [severity]. Delivery Delay: [N] days. Inventory Level: [N] units. Transportation Cost: $[N]. Date: [date]
+      </div>
+      <br/><strong>Why row-per-document over sliding window?</strong> Each CSV row is a complete, self-contained incident event with a natural semantic boundary. Splitting rows would lose the event-level context. At ~60–80 tokens per document, all records fit well within the all-MiniLM-L6-v2's 256-token limit without truncation. Token counts are stored in metadata using <strong>tiktoken cl100k_base</strong> for downstream budget management.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is metadata extracted and used for filtering?</div>
+    <div class="qa-a">Every document carries a rich metadata dictionary stored alongside its embedding vector. Metadata fields are used for <strong>pre-retrieval filtering</strong> via structured <code>$where</code> queries:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Metadata Field</th><th>Filter Operator</th><th>Use Case</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">supplier_id</td><td><code>$eq "S003"</code></td><td>Focus analysis on a specific supplier</td></tr>
+          <tr><td class="mono">severity</td><td><code>$eq "critical"</code></td><td>Return only critical incidents</td></tr>
+          <tr><td class="mono">shipment_status</td><td><code>$eq "Delayed"</code></td><td>Filter to delayed shipments only</td></tr>
+          <tr><td class="mono">warehouse_location</td><td><code>$eq "Chicago, IL"</code></td><td>Regional analysis</td></tr>
+          <tr><td class="mono">incident_type</td><td><code>$eq "Port Congestion"</code></td><td>Incident-type-specific queries</td></tr>
+        </tbody>
+      </table>
+      Filters reduce the ANN search candidate space before scoring — this improves both precision and performance.
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 4</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 3. RAG & RETRIEVAL ═══════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 03</div>
+    <div class="sec-title">RAG &amp; Retrieval Quality</div>
+    <div class="sec-desc">Hybrid search, semantic retrieval, relevance of retrieved information</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What retrieval strategy is implemented and why hybrid over semantic-only?</div>
+    <div class="qa-a">The system implements <strong>hybrid retrieval</strong> combining BM25 sparse search and semantic dense search, merged via <strong>Reciprocal Rank Fusion (RRF)</strong>. Neither approach alone is sufficient:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Method</th><th>Strength</th><th>Weakness</th></tr></thead>
+        <tbody>
+          <tr><td><strong>BM25 (keyword)</strong></td><td>Exact matches: supplier IDs (S003), incident types (Port Congestion), warehouse names</td><td>Misses synonyms, paraphrasing, conceptual similarity</td></tr>
+          <tr><td><strong>Semantic (embedding)</strong></td><td>Conceptual similarity: "component shortage" ↔ "supply disruption"</td><td>Fails on rare terms, exact entity matching, codes</td></tr>
+          <tr><td><strong>Hybrid RRF</strong></td><td>Best of both — entity precision + conceptual recall</td><td>Slightly more compute (two retrievals)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does Reciprocal Rank Fusion work mathematically?</div>
+    <div class="qa-a">RRF combines two ranked lists using only rank positions — no score normalisation needed:
+      <div class="hbox hbox-blue" style="font-family:'Courier New',monospace;font-size:9pt;margin:3mm 0">
+        RRF_score(doc) = α × 1/(k + rank_semantic) + (1-α) × 1/(k + rank_bm25)
+        <br/>Where: α = 0.5 (configurable), k = 60 (standard constant)
+      </div>
+      The constant <strong>k=60</strong> prevents the top-ranked document from dominating. Both ranked lists are merged (union), and documents appearing in only one list get score contribution from that list only. Final results are sorted descending by RRF score and sliced to <code>top_k</code>.
+      <br/><br/><strong>Why not linear combination?</strong> BM25 scores are unbounded (corpus-dependent TF-IDF weights), making direct weighted addition unreliable. RRF is robust to score scale differences.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What is the logistics-aware reranker and how does it improve results?</div>
+    <div class="qa-a">After RRF fusion, a lightweight <strong>domain-specific reranker</strong> applies field-match boosts before returning results. For each candidate document, if the query string contains an exact match for any of these high-signal fields — <code>incident_type</code>, <code>severity</code>, <code>warehouse_location</code>, <code>supplier_id</code>, <code>product_category</code> — a +0.05 boost is added to the RRF score per matched field.
+      <br/><br/><strong>Example:</strong> Query "critical delay from supplier S003 in Chicago" — documents with severity=critical, supplier_id=S003, warehouse=Chicago all receive boosts, surfacing the most contextually precise results to the top ranks.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is the embedding model chosen and what is its role?</div>
+    <div class="qa-a"><strong>all-MiniLM-L6-v2</strong> (Sentence-Transformers) is used for its optimal balance of speed, size, and quality for semantic similarity tasks:
+      <span class="pill pill-blue">384 dimensions</span>
+      <span class="pill pill-blue">256-token max input</span>
+      <span class="pill pill-green">~80 MB model size</span>
+      <span class="pill pill-green">~14,000 sentences/sec on CPU</span>
+      <span class="pill pill-orange">L2-normalised output</span>
+      <br/><br/>L2-normalisation means cosine similarity equals the dot product — used in the numpy vector store for efficient batch scoring: <code>embs_normed @ q_norm</code>. A singleton pattern ensures the model loads only once per process.
+    </div>
+  </div>
+
+  <div class="hbox hbox-green"><strong>Retrieval Quality Baseline:</strong> In live testing, the hybrid search returns semantically relevant incidents within 12–15ms for the 600-document corpus. Metadata filtering correctly narrows results to the specified supplier, region, or severity without false positives.</div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 5</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 4. AGENTIC AI DESIGN ═════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 04</div>
+    <div class="sec-title">Agentic AI Design</div>
+    <div class="sec-desc">Multi-agent architecture and agent orchestration quality</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>Describe the multi-agent architecture and each agent's responsibility.</div>
+    <div class="qa-a">The system implements a <strong>hierarchical parallel multi-agent architecture</strong> with four specialised agents:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Agent</th><th>Specialisation</th><th>Tools Available</th><th>Escalation Trigger</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SupplierRiskAgent</strong></td><td>Delivery performance, SLA compliance, single-source dependency</td><td><code>get_supplier_history()</code></td><td>risk_score &gt; 0.7</td></tr>
+          <tr><td><strong>ShipmentAnalysisAgent</strong></td><td>Route disruptions, port congestion, carrier capacity</td><td><code>get_route_status()</code></td><td>Critical delay patterns</td></tr>
+          <tr><td><strong>InventoryIntelAgent</strong></td><td>Stockout prediction, demand-supply gap, safety stock</td><td><code>check_inventory()</code> <code>get_demand_forecast()</code></td><td>Any warehouse &lt; 50 units</td></tr>
+          <tr><td><strong>RecommendationAgent</strong></td><td>Cross-agent synthesis, conflict resolution, proactive alerts</td><td>None (synthesis-only)</td><td>Consolidated risk &gt; 0.85 → Director</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is tool use (function calling) implemented in agents?</div>
+    <div class="qa-a">Each agent uses <strong>OpenAI function calling</strong> with a two-turn conversation loop:
+      <ol>
+        <li>Initial call with <code>tools=[...]</code> and <code>tool_choice="auto"</code></li>
+        <li>If <code>response.choices[0].message.tool_calls</code> is present: execute tool, append results as <code>role="tool"</code> messages</li>
+        <li>Second LLM call with full conversation history (including tool results) for final analysis</li>
+      </ol>
+      Tools are defined in OpenAI function schema format with <code>parameters</code> (JSON Schema). This allows agents to request domain-specific data (supplier history, route status, inventory levels) before making risk determinations — grounding their analysis in additional context beyond what was retrieved.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does the Agent-to-Agent (A2A) escalation workflow operate?</div>
+    <div class="qa-a">A2A escalation is a <strong>threshold-driven notification chain</strong> between agents, implemented in the Orchestrator:
+      <ol>
+        <li>After the parallel phase, any agent with <code>risk_score &gt; 0.7</code> sets <code>escalated=True</code></li>
+        <li>The Orchestrator logs a chain entry: <em>"AgentName → RecommendationAgent: [reason]"</em></li>
+        <li>If the average risk score across all escalated agents exceeds 0.85, a second entry is appended: <em>"RecommendationAgent → Operations Director: Critical multi-agent escalation"</em></li>
+        <li>The RecommendationAgent receives the escalation context in its input, allowing it to weight synthesis toward the highest-risk findings</li>
+        <li>The complete <code>escalation_chain</code> is returned in the API response for full auditability</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is agent parallelism achieved and what happens if an agent fails?</div>
+    <div class="qa-a"><strong>Parallelism:</strong> Python's <code>ThreadPoolExecutor(max_workers=3)</code> submits all three specialist agents simultaneously. Since LLM API calls are I/O-bound (network wait), threads release the GIL during the wait — achieving effective concurrency. Wall-clock time ≈ slowest single agent, not the sum.
+      <br/><br/><strong>Fault isolation:</strong> Each future is wrapped in a try/except block. If an agent raises any exception (timeout, API error, parsing failure), the Orchestrator inserts a stub <code>AgentResult</code> with <code>risk_score=0.0</code> and <code>"Manual review required"</code> recommendation — preventing one failed agent from crashing the entire analysis. The RecommendationAgent still synthesises from the available results.
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 6</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 5. RECOMMENDATION QUALITY ════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 05</div>
+    <div class="sec-title">Recommendation / Intelligence Quality</div>
+    <div class="sec-desc">Root cause analysis, prediction quality, recommendation explainability</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How are mitigation recommendations structured for explainability?</div>
+    <div class="qa-a">Every recommendation is generated in a <strong>structured 5-part format</strong> enforced by the prompt:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Field</th><th>Example Value</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Priority</strong></td><td>1 (highest urgency)</td><td>Tells the manager what to do first</td></tr>
+          <tr><td><strong>Action</strong></td><td>"Activate backup supplier S007 for critical components"</td><td>Specific, non-generic action step</td></tr>
+          <tr><td><strong>Timeline</strong></td><td>Immediate / 24h / Week / Month</td><td>Urgency and planning horizon</td></tr>
+          <tr><td><strong>Owner</strong></td><td>Procurement Team / Logistics Manager</td><td>Clear accountability assignment</td></tr>
+          <tr><td><strong>Expected Impact</strong></td><td>"Restore 80% supply capacity within 48h"</td><td>Quantified outcome expectation</td></tr>
+        </tbody>
+      </table>
+      Recommendations are also accompanied by the full <strong>risk factor list</strong> explaining why the risk score was computed — e.g., "Critical supplier delays averaging 11.2 days detected in 4 of 6 retrieved incidents."
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does the system perform root cause analysis?</div>
+    <div class="qa-a">Root cause analysis is performed at two levels:
+      <ol>
+        <li><strong>Metric-level (Risk Scoring):</strong> The four-dimension risk scorer isolates which operational dimension is driving risk — if inventory_risk=0.95 but supplier_risk=0.15, the root cause is clearly stock depletion, not supplier performance.</li>
+        <li><strong>Pattern-level (Agent Analysis):</strong> Each specialist agent is prompted to identify root causes in their domain. SupplierRiskAgent identifies whether delays stem from production issues, raw material shortages, or quality holds. ShipmentAnalysisAgent traces whether delays originate at the port, in customs, or with the carrier.</li>
+      </ol>
+      The RecommendationAgent synthesises both levels into a narrative: <em>"High inventory risk driven by 6-day supplier delay at S003 coinciding with peak Q4 demand — stockout window is 8 days."</em>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does evidence grounding ensure recommendation quality?</div>
+    <div class="qa-a">The RAG pipeline grounds every recommendation in retrieved historical evidence through three mechanisms:
+      <ol>
+        <li><strong>Context injection:</strong> Up to 8 retrieved incidents (trimmed to 8,000 tokens) are embedded directly in the GPT-4o prompt — the model generates recommendations based on actual past disruptions, not hallucinated patterns.</li>
+        <li><strong>Faithfulness enforcement:</strong> The LLM-as-judge evaluation explicitly scores <em>Evidence-Based</em> (0–10): "Are recommendations grounded in the historical data?" — low-scoring responses are flagged.</li>
+        <li><strong>Risk factor attribution:</strong> Every risk score comes with a <code>risk_factors</code> list identifying which specific metric and threshold triggered each dimension — creating a complete audit trail from query to recommendation.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="hbox hbox-purple"><strong>Proactive Intelligence:</strong> The RecommendationAgent generates <code>PROACTIVE_ALERTS</code> — forward-looking warnings not directly asked for. Example: "Port congestion at LA typically peaks Q4 — pre-position inventory 6 weeks ahead to maintain safety stock." This transforms the system from reactive to proactive risk management.</div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 7</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 6. SYSTEM DESIGN ═════════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 06</div>
+    <div class="sec-title">System Design &amp; Architecture</div>
+    <div class="sec-desc">Microservice design, scalability, API design, modularity</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is the system designed as a microservice?</div>
+    <div class="qa-a">The system follows a <strong>layered microservice architecture</strong> with clear separation of concerns:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Layer</th><th>Modules</th><th>Responsibility</th></tr></thead>
+        <tbody>
+          <tr><td><strong>API Layer</strong></td><td><code>api/routes/</code></td><td>HTTP interface, request validation, response formatting</td></tr>
+          <tr><td><strong>Business Services</strong></td><td><code>services/</code></td><td>RAG pipeline, risk scoring, anomaly detection, evaluation</td></tr>
+          <tr><td><strong>Agent Layer</strong></td><td><code>agents/</code></td><td>Specialist AI agents and orchestration</td></tr>
+          <tr><td><strong>Core Services</strong></td><td><code>core/</code></td><td>Embedding, vector store, hybrid search, guardrails</td></tr>
+          <tr><td><strong>Data Layer</strong></td><td><code>data/</code></td><td>Ingestion, preprocessing, chunking</td></tr>
+          <tr><td><strong>Models</strong></td><td><code>models/schemas.py</code></td><td>All Pydantic request/response schemas</td></tr>
+        </tbody>
+      </table>
+      The backend is containerised via <code>Dockerfile</code> and <code>docker-compose.yml</code>, with the frontend served separately via Nginx Alpine.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How scalable is the architecture?</div>
+    <div class="qa-a">The system is designed with <strong>horizontal and vertical scalability paths</strong>:
+      <ul>
+        <li><strong>Stateless API:</strong> FastAPI workers share no in-memory state — multiple Uvicorn workers or Docker replicas can run behind a load balancer</li>
+        <li><strong>Vector store abstraction:</strong> <code>VectorStore</code> class hides implementation — swap numpy (development) for Pinecone/Weaviate (production) by changing only <code>vector_store.py</code></li>
+        <li><strong>Agent parallelism:</strong> <code>ThreadPoolExecutor(max_workers=3)</code> configurable via environment for larger agent fleets</li>
+        <li><strong>Configurable LLM:</strong> <code>LLM_MODEL</code> env var switches between GPT-4o-mini (cost) and GPT-4o (quality) without code changes</li>
+        <li><strong>Batch ingestion:</strong> 100-doc batches allow large dataset ingestion without memory spikes</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What are the API design principles?</div>
+    <div class="qa-a">The API follows REST conventions with production-grade practices:
+      <ul>
+        <li><strong>Versioned namespace:</strong> All endpoints under <code>/api/v1/</code> — future v2 can coexist</li>
+        <li><strong>Pydantic v2 validation:</strong> Every request and response is schema-validated — invalid inputs return structured 422 errors, not 500s</li>
+        <li><strong>Consistent error responses:</strong> All error paths return <code>{"error": "...", "detail": "...", "code": N}</code></li>
+        <li><strong>OpenAPI auto-docs:</strong> Swagger UI at <code>/docs</code>, ReDoc at <code>/redoc</code> — generated automatically from Pydantic schemas</li>
+        <li><strong>CORS:</strong> Configured for frontend-backend separation, restrictable to specific origins in production</li>
+        <li><strong>Health endpoint:</strong> <code>GET /api/v1/health</code> returns vector store status, LLM connectivity, and document count for monitoring</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 8</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 7. EVALUATION FRAMEWORK ══════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 07</div>
+    <div class="sec-title">Evaluation Framework</div>
+    <div class="sec-desc">DeepEval, LLM-as-judge, validation methodology</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is DeepEval integrated and what metrics does it measure?</div>
+    <div class="qa-a">DeepEval is integrated in <code>evaluation_service.py</code> and triggered via the <code>evaluate_quality=true</code> flag on the <code>POST /recommendations</code> endpoint. It measures four standard RAG quality metrics:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Metric</th><th>What It Catches</th><th>Threshold</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Answer Relevancy</strong></td><td>Does the response address the actual query?</td><td>≥ 0.5</td></tr>
+          <tr><td><strong>Faithfulness</strong></td><td>Are claims grounded in retrieved context (no hallucination)?</td><td>≥ 0.5</td></tr>
+          <tr><td><strong>Contextual Precision</strong></td><td>Are the retrieved documents relevant to the question?</td><td>≥ 0.5</td></tr>
+          <tr><td><strong>Contextual Recall</strong></td><td>Does the context cover all information needed to answer?</td><td>≥ 0.5</td></tr>
+        </tbody>
+      </table>
+      The system gracefully degrades — if DeepEval is not configured, a placeholder response is returned without crashing the recommendation pipeline.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How does the LLM-as-judge work and what does it evaluate?</div>
+    <div class="qa-a">The LLM-as-judge uses <strong>GPT-4o as an independent evaluator</strong> of recommendation quality. It scores responses across five supply chain-specific dimensions (0–10 each):
+      <ol>
+        <li><strong>Relevance</strong> — Are recommendations directly tied to the identified risk?</li>
+        <li><strong>Actionability</strong> — Can the operations team execute these steps immediately?</li>
+        <li><strong>Completeness</strong> — Are all major risk dimensions (supplier, inventory, shipment, demand) addressed?</li>
+        <li><strong>Feasibility</strong> — Are the timelines and owners realistic for the organisation?</li>
+        <li><strong>Evidence-Based</strong> — Do recommendations reference or align with the historical incident data?</li>
+      </ol>
+      The judge returns an <strong>APPROVED / NEEDS_IMPROVEMENT / REJECTED</strong> verdict plus a 0–10 overall score. This is the key difference from DeepEval — it evaluates <em>business value</em>, not just RAG pipeline quality.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What other validation mechanisms exist beyond DeepEval?</div>
+    <div class="qa-a">The evaluation framework operates at three levels:
+      <ol>
+        <li><strong>Input validation (Guardrails):</strong> Three-layer check ensures queries are valid, injection-free, and domain-relevant before any LLM call — prevents garbage-in-garbage-out at source</li>
+        <li><strong>Statistical validation (Anomaly Detection):</strong> IsolationForest validates that operational patterns detected in the data are statistically anomalous, not arbitrary — Pearson correlation analysis confirms the anomalies are correlated with known disruption drivers</li>
+        <li><strong>Unit tests:</strong> <code>test_search.py</code> validates guardrails and risk scoring logic with known-input assertions; <code>test_agents.py</code> validates agent output parsing and orchestrator risk consolidation</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="hbox hbox-blue"><strong>Why dual evaluation (DeepEval + LLM Judge)?</strong> DeepEval catches technical RAG failures (hallucination, irrelevant retrieval). The LLM judge catches business quality failures (generic recommendations, infeasible timelines, missing risk dimensions). Both are needed — a response can be faithful and relevant but still operationally useless.</div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 9</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 8. DASHBOARD / UX ════════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 08</div>
+    <div class="sec-title">Dashboard / User Experience</div>
+    <div class="sec-desc">Front-end usability and operational visibility</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What does the frontend provide and how is it structured?</div>
+    <div class="qa-a">The frontend is a <strong>zero-dependency Single Page Application</strong> (HTML/CSS/JS, no npm or build step) with five dedicated tabs, each exposing a distinct system capability:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Tab</th><th>API Endpoint</th><th>Operational Use Case</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Search</strong></td><td><code>POST /search</code></td><td>Natural language incident retrieval with severity/status filters</td></tr>
+          <tr><td><strong>Recommendations</strong></td><td><code>POST /recommendations</code></td><td>Risk assessment + prioritised mitigation steps + optional LLM judge score</td></tr>
+          <tr><td><strong>Multi-Agent</strong></td><td><code>POST /agents/analyze</code></td><td>Parallel agent results, A2A escalation chain, proactive alerts</td></tr>
+          <tr><td><strong>Dashboard</strong></td><td><code>GET /analytics/dashboard</code></td><td>Live KPI metrics: incident counts, risk suppliers, avg delay/cost, trend</td></tr>
+          <tr><td><strong>Anomalies</strong></td><td><code>GET /analytics/anomalies</code></td><td>IsolationForest anomaly cards with Z-score attributed features + insights</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What design decisions improve usability for operations managers?</div>
+    <div class="qa-a">The UX is designed for <strong>operational clarity over visual complexity</strong>:
+      <ul>
+        <li><strong>Enter-key search:</strong> All query inputs trigger search on Enter — no mouse click required for power users</li>
+        <li><strong>Colour-coded severity:</strong> CRITICAL=red, HIGH=amber, MEDIUM=blue, LOW=green — consistent across all views</li>
+        <li><strong>Animated risk bars:</strong> CSS transitions animate risk score bars on load — visual change makes score magnitudes immediately readable</li>
+        <li><strong>Latency display:</strong> Every result card shows response time in milliseconds — transparency about performance</li>
+        <li><strong>Health badge:</strong> Permanent header indicator (green/red dot) polls <code>/health</code> every 30 seconds — operations teams always know if the system is live</li>
+        <li><strong>Loading spinner:</strong> Full-screen overlay prevents double-submits during LLM calls (5–15 second wait)</li>
+        <li><strong>Escalation chain visualisation:</strong> A2A escalation entries rendered as distinct orange cards — makes the agent communication pathway immediately visible</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What operational visibility does the analytics dashboard provide?</div>
+    <div class="qa-a">The dashboard aggregates six KPI categories from the full incident corpus in real time:
+      <span class="pill pill-red">Total + Critical Incident Count</span>
+      <span class="pill pill-orange">High-Risk Supplier List (top 5)</span>
+      <span class="pill pill-orange">Average Delivery Delay (days)</span>
+      <span class="pill pill-blue">Average Transportation Cost ($)</span>
+      <span class="pill pill-red">Stockout Risk Locations (top 5)</span>
+      <span class="pill pill-purple">Incident Type Distribution</span>
+      <span class="pill pill-green">Severity Distribution</span>
+      <span class="pill pill-blue">Disruption Trend (improving / stable / deteriorating)</span>
+      <br/><br/>The trend is computed from the recent 100 incidents — high-delay frequency determines whether conditions are improving or worsening, giving operations managers directional awareness without requiring manual analysis.
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 10</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 9. CODE QUALITY ══════════════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 09</div>
+    <div class="sec-title">Code Quality &amp; Documentation</div>
+    <div class="sec-desc">Code structure, readability, README, maintainability</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>How is the codebase structured for maintainability?</div>
+    <div class="qa-a">The codebase follows <strong>single-responsibility layered architecture</strong> — each module has one clear job:
+      <ul>
+        <li><strong>Abstractions at boundaries:</strong> <code>VectorStore</code> hides the embedding storage backend — switching from numpy to Pinecone changes only one file. <code>BaseSupplyChainAgent</code> means adding a new agent is just a subclass with <code>system_prompt</code>, <code>tools</code>, and <code>analyze()</code></li>
+        <li><strong>No hardcoded values:</strong> All configuration (model name, top_k, alpha, contamination) is in <code>Settings</code> (pydantic-settings) and loaded from <code>.env</code> — change behaviour without touching code</li>
+        <li><strong>Idempotent operations:</strong> Ingestion checks count before re-indexing; upsert semantics in VectorStore prevent duplicate documents</li>
+        <li><strong>Consistent error handling:</strong> All API routes wrap service calls in try/except blocks, mapping ValueError → 400 and Exception → 500 consistently across all endpoints</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What documentation is provided with the project?</div>
+    <div class="qa-a">The project ships five layers of documentation:
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Document</th><th>Audience</th><th>Content</th></tr></thead>
+        <tbody>
+          <tr><td><code>README.md</code></td><td>Developer / Setup</td><td>Architecture diagram, setup steps, API usage examples, Docker commands</td></tr>
+          <tr><td><code>TECHNICAL_DOCUMENT.md</code></td><td>Architect / Reviewer</td><td>15 sections — all design decisions, formulas, trade-offs, deployment guide</td></tr>
+          <tr><td><code>diagrams/DIAGRAMS.md</code></td><td>All</td><td>9 Mermaid diagrams (GitHub-rendered) — sequence + flowcharts</td></tr>
+          <tr><td><code>diagrams/diagrams.html</code></td><td>All</td><td>Interactive HTML diagram viewer — tab navigation, rendered Mermaid</td></tr>
+          <tr><td><code>diagrams/FLOW_DOCUMENT.html</code></td><td>Panel / Presentation</td><td>11-page A4 print-ready document — print to PDF for submission</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What testing is in place?</div>
+    <div class="qa-a">Unit tests cover the two most critical non-LLM components:
+      <ul>
+        <li><strong><code>test_search.py</code>:</strong> Tests all three guardrail layers (valid query, empty, too short, injection block, domain relevance, sanitisation) and all five risk scoring scenarios (low/high/critical/empty/all-dimensions)</li>
+        <li><strong><code>test_agents.py</code>:</strong> Tests agent output parsing (full structured response, missing score, no escalation), bullet extraction, consolidated risk weighting (4 scenarios), and recommendation deduplication logic</li>
+      </ul>
+      Tests use <code>unittest.mock</code> to isolate logic from LLM calls — no API key needed to run the test suite. Run with: <code>pytest tests/ -v</code>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 11</span></div>
+</div>
+
+<!-- ═══════════════════════════════════ 10. DEMO & PRESENTATION ══════════ -->
+<div class="page">
+  <div class="sec-head">
+    <div class="sec-num">Criterion 10</div>
+    <div class="sec-title">Demo &amp; Presentation</div>
+    <div class="sec-desc">Solution explanation, demo execution, Q&amp;A handling</div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What is the recommended 10-minute demo flow?</div>
+    <div class="qa-a">
+      <table class="tbl" style="margin-top:2mm">
+        <thead><tr><th>Time</th><th>Step</th><th>What to Show</th></tr></thead>
+        <tbody>
+          <tr><td>0:00–1:00</td><td><strong>Problem Statement</strong></td><td>Briefly explain the supply chain intelligence gap — distributed data, reactive monitoring</td></tr>
+          <tr><td>1:00–2:00</td><td><strong>System Overview</strong></td><td>Show architecture diagram — frontend → API → RAG → Agents → LLM flow</td></tr>
+          <tr><td>2:00–3:30</td><td><strong>Search Tab</strong></td><td>Type "supplier delivery delays for critical components" → show ranked incident cards with hybrid search, metadata chips, scores</td></tr>
+          <tr><td>3:30–5:30</td><td><strong>Recommendations Tab</strong></td><td>Type "port congestion impacting shipment schedules" → show animated risk bars (overall, 4 dimensions), 5 prioritised steps with owner/timeline/impact</td></tr>
+          <tr><td>5:30–7:30</td><td><strong>Multi-Agent Tab</strong></td><td>Type "warehouse inventory approaching stockout and supplier delays increasing" → show all 4 agent cards, escalation chain, proactive alerts</td></tr>
+          <tr><td>7:30–8:30</td><td><strong>Dashboard + Anomalies</strong></td><td>Show KPI grid (600 incidents, critical count, trend) → Anomalies tab with IsolationForest results and correlation insights</td></tr>
+          <tr><td>8:30–10:00</td><td><strong>Q&amp;A</strong></td><td>Open for panel questions</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What are the most likely panel questions and their answers?</div>
+    <div class="qa-a">
+      <strong>Q: "Why use hybrid search instead of just vector search?"</strong><br/>
+      A: Semantic search alone misses exact entity matches — if an operations manager searches "supplier S003", pure semantic search may return conceptually related but wrong suppliers. BM25 handles exact codes and names precisely. RRF combines both without score normalisation overhead.
+      <br/><br/>
+      <strong>Q: "How do you prevent hallucinations in recommendations?"</strong><br/>
+      A: Three layers: (1) Retrieved incidents are injected directly into the prompt as grounding context. (2) DeepEval Faithfulness metric flags responses that make claims unsupported by the context. (3) LLM-as-judge scores Evidence-Based dimension — low scores are surfaced to the user.
+      <br/><br/>
+      <strong>Q: "Why not use a managed vector database like Pinecone?"</strong><br/>
+      A: The VectorStore is fully abstracted — the numpy implementation is a development choice for Python 3.13 / Windows compatibility. In production, the interface is identical; only <code>vector_store.py</code> changes. ChromaDB or Pinecone would be the next step.
+      <br/><br/>
+      <strong>Q: "How does the system scale to 10 million incidents?"</strong><br/>
+      A: Replace the numpy store with Pinecone (managed ANN at scale), run multiple Uvicorn workers behind a load balancer, use Redis caching for frequent queries. The BM25 index would move to Elasticsearch. The agent and RAG logic remains unchanged.
+    </div>
+  </div>
+
+  <div class="qa-card">
+    <div class="qa-q"><div class="qa-q-icon">Q</div>What are the key differentiators of this project versus a basic RAG system?</div>
+    <div class="qa-a">
+      <span class="pill pill-blue">Hybrid Search with RRF</span> — not just semantic, combines keyword + embedding + domain boost<br/>
+      <span class="pill pill-purple">Multi-dimensional Risk Scoring</span> — 4 weighted dimensions, not a single score<br/>
+      <span class="pill pill-green">Multi-Agent Parallelism</span> — 3 specialist agents run concurrently, not sequentially<br/>
+      <span class="pill pill-orange">A2A Escalation Chain</span> — agents communicate and escalate to director level automatically<br/>
+      <span class="pill pill-red">Dual Evaluation</span> — DeepEval (RAG quality) + LLM-as-judge (business quality)<br/>
+      <span class="pill pill-blue">Token Budget Management</span> — tiktoken-based context window control prevents truncation errors<br/>
+      <span class="pill pill-purple">IsolationForest Anomaly Detection</span> — statistical anomaly detection beyond threshold alerts<br/>
+      <span class="pill pill-green">Proactive Alerts</span> — system surfaces risks the user did not explicitly ask about
+    </div>
+  </div>
+
+  <div class="hbox hbox-green"><strong>Setup for Demo:</strong> Ensure <code>uvicorn app.main:app --port 8000</code> is running from the <code>backend/</code> directory with a valid <code>OPENAI_API_KEY</code> in <code>.env</code>. Open <code>frontend/index.html</code> in Chrome. The health badge in the header turns green when the server is ready. The vector store persists between restarts — no re-ingestion needed.</div>
+
+  <div class="pg-foot"><span>AI-Powered Supply Chain Risk Intelligence Assistant</span><span>Evaluation Q&amp;A Document v1.0</span><span>Page 12</span></div>
+</div>
+
+</body>
+</html>
