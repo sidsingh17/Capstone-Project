@@ -38,6 +38,15 @@
             placeholder="e.g. supplier delivery delays for critical components…" />
           <button class="btn primary" onclick="doSearch()">Search</button>
         </div>
+        <div class="sample-queries">
+          <span class="sample-label">Try:</span>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Supplier delivery delays for critical components</button>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Port congestion impacting West Coast shipments</button>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Warehouse inventory approaching stockout levels</button>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Transportation cost spike in Northeast region</button>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Demand surge causing fulfillment bottlenecks</button>
+          <button class="sample-chip" onclick="setSample('searchQuery', this)">Customs clearance delays for imported goods</button>
+        </div>
         <div class="filter-row">
           <select id="fSeverity" class="select"><option value="">All Severities</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
           <select id="fStatus" class="select"><option value="">All Statuses</option><option>On-Time</option><option>Delayed</option><option>Critical Delay</option><option>In-Transit</option><option>Delivered</option></select>
@@ -58,6 +67,15 @@
             placeholder="e.g. port congestion is impacting shipment schedules…" />
           <button class="btn primary" onclick="doRecommend()">Analyze</button>
         </div>
+        <div class="sample-queries">
+          <span class="sample-label">Try:</span>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Port congestion is impacting our shipment schedules significantly</button>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Critical supplier has multiple consecutive delivery delays</button>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Inventory levels at Chicago warehouse critically low for electronics</button>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Transportation costs increased 35% unexpectedly this quarter</button>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Demand spike exceeding supply capacity for automotive parts</button>
+          <button class="sample-chip" onclick="setSample('recQuery', this)">Weather disruption affecting southeast warehouse operations</button>
+        </div>
         <div class="filter-row">
           <select id="recSeverity" class="select"><option value="">Any Severity</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
           <label class="toggle-label"><input id="evalQuality" type="checkbox" /> LLM Judge Evaluation</label>
@@ -75,6 +93,15 @@
           <input id="agentQuery" class="text-input" type="text"
             placeholder="e.g. warehouse inventory approaching stockout and supplier delays increasing…" />
           <button class="btn primary" onclick="doAgentAnalysis()">Run Agents</button>
+        </div>
+        <div class="sample-queries">
+          <span class="sample-label">Try:</span>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Warehouse inventory approaching stockout and supplier delays increasing</button>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Multiple suppliers reporting raw material shortages simultaneously</button>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Port congestion and transportation bottlenecks causing cascade delays</button>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Critical inventory shortage with high demand forecast next quarter</button>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Supplier performance degrading with rising delivery delay trends</button>
+          <button class="sample-chip" onclick="setSample('agentQuery', this)">Regional disruption affecting multiple warehouses and supply routes</button>
         </div>
         <div class="filter-row">
           <input id="agentSupplier" class="text-input sm" type="text" placeholder="Supplier ID (optional)" />

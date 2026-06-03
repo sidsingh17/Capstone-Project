@@ -1,5 +1,17 @@
 const API = 'http://localhost:8000/api/v1';
 
+// ─── Sample Query Helper ─────────────────────────────────────────────────────
+function setSample(inputId, chipEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.value = chipEl.textContent.trim();
+  input.focus();
+  // Highlight active chip
+  const siblings = chipEl.closest('.sample-queries').querySelectorAll('.sample-chip');
+  siblings.forEach(c => c.classList.remove('active'));
+  chipEl.classList.add('active');
+}
+
 // ─── Tab Navigation ──────────────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => {

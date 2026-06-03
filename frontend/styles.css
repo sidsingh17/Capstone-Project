@@ -133,6 +133,32 @@ body {
 .btn.secondary { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border2); }
 .btn.secondary:hover { background: var(--border); border-color: var(--accent); }
 
+/* ─── Sample Queries ────────────────────────────────────────────────────── */
+.sample-queries {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  margin-bottom: 14px;
+}
+.sample-label {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .6px; white-space: nowrap;
+  flex-shrink: 0;
+}
+.sample-chip {
+  padding: 5px 12px; border: 1px solid var(--border2);
+  border-radius: 20px; background: var(--surface2);
+  color: var(--text2); font-size: 12px; cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+  font-family: inherit;
+}
+.sample-chip:hover {
+  background: var(--accent-bg); border-color: var(--accent);
+  color: var(--accent); transform: translateY(-1px);
+}
+.sample-chip.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 600;
+}
+
 /* ─── Results Area ──────────────────────────────────────────────────────── */
 .results-area { margin-top: 8px; }
 
