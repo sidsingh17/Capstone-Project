@@ -206,7 +206,7 @@ function riskBar(label, score, colorClass) {
   return `<div class="risk-row">
     <span class="risk-label">${label}</span>
     <div class="risk-bar-wrap"><div class="risk-bar ${colorClass}" style="width:${pct}%"></div></div>
-    <span class="risk-value" style="color:var(--${colorClass === 'low' ? 'success' : colorClass === 'medium' ? 'accent' : colorClass === 'high' ? 'warning' : 'danger'})">${pct}%</span>
+    <span class="risk-value" style="color:var(--${colorClass === 'low' ? 'success' : colorClass === 'medium' ? 'navy' : colorClass === 'high' ? 'warning' : 'danger'})">${pct}%</span>
   </div>`;
 }
 
@@ -246,7 +246,7 @@ function renderAgentResults(data) {
 
   const meta = `<p class="meta-info">
     Agents: <strong>${data.agents_invoked.join(', ')}</strong> ·
-    Consolidated Risk: <strong style="color:var(--${color === 'low' ? 'success' : color === 'medium' ? 'accent' : color === 'high' ? 'warning' : 'danger'})">${pct}%</strong> ·
+    Consolidated Risk: <strong style="color:var(--${color === 'low' ? 'success' : color === 'medium' ? 'navy' : color === 'high' ? 'warning' : 'danger'})">${pct}%</strong> ·
     ${data.latency_ms.toFixed(0)} ms
   </p>`;
 
@@ -256,7 +256,7 @@ function renderAgentResults(data) {
     <div class="agent-card ${a.escalated ? 'escalated' : ''}">
       <div class="agent-header">
         <span class="agent-name">${a.agent_name}</span>
-        <span class="agent-score" style="color:var(--${riskColor(a.risk_score) === 'low' ? 'success' : riskColor(a.risk_score) === 'medium' ? 'accent' : riskColor(a.risk_score) === 'high' ? 'warning' : 'danger'})">
+        <span class="agent-score" style="color:var(--${riskColor(a.risk_score) === 'low' ? 'success' : riskColor(a.risk_score) === 'medium' ? 'navy' : riskColor(a.risk_score) === 'high' ? 'warning' : 'danger'})">
           Risk: ${Math.round(a.risk_score * 100)}%
         </span>
       </div>
