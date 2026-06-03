@@ -245,45 +245,124 @@ def slide_solution(prs):
 
 
 def slide_architecture(prs):
+    """
+    Matches the architecture diagram in TECHNICAL_DOCUMENT.md §2:
+    FRONTEND → HTTP/REST → FASTAPI /api/v1 (4 routes)
+      → Service Layer (RAG Search | RAG Generate | Orchestrator | Analytics)
+      → CORE SERVICES (HybridSearch | RiskScoring | Guardrails | TokenOptimizer)
+      → [NumPy VectorStore]   [OpenAI GPT-4o-mini via GW]
+      → DATA LAYER (CSV → Preprocessing → Chunking → Embeddings)
+    """
     sl = prs_slide(prs)
     page_header(sl, "System Architecture",
-                "Layered microservice design — each layer independently replaceable")
+                "Layered microservice design (TECHNICAL_DOCUMENT.md §2) — each layer independently replaceable")
 
-    layers = [
-        ("FRONTEND  (5-Tab SPA)",
-         "Search  |  Recommendations  |  Multi-Agent  |  Dashboard  |  Anomalies",
-         ORANGE, WHITE),
-        ("FASTAPI  API LAYER  /api/v1",
-         "/search   /recommendations   /agents/analyze   /analytics/dashboard   /analytics/anomalies",
-         NAVY, WHITE),
-        ("CORE SERVICES",
-         "HybridSearch (BM25 + RRF)   |   RiskScoring   |   Guardrails   |   TokenOptimizer",
-         NAVY_LIGHT, WHITE),
-        ("BUSINESS SERVICES",
-         "RAG Service   |   Anomaly Detection (IsolationForest)   |   Evaluation (DeepEval + LLM Judge)",
-         RGBColor(0x2E, 0x4A, 0x80), WHITE),
-        ("MULTI-AGENT SYSTEM",
-         "SupplierRiskAgent  ·  ShipmentAgent  ·  InventoryAgent  →  RecommendationAgent  [A2A Escalation]",
-         RGBColor(0x3A, 0x56, 0x90), WHITE),
-        ("DATA LAYER",
-         "all-MiniLM-L6-v2 Embeddings   |   NumPy VectorStore (embeddings.npy)   |   BM25 Index   |   supply_chain_data.csv",
-         RGBColor(0x18, 0x2A, 0x50), RGBColor(0xC8, 0xD3, 0xE8)),
+    COL_FG = RGBColor(0xC8, 0xD3, 0xE8)
+
+    # ── Layer 1: FRONTEND ──────────────────────────────────────────────────
+    add_rect(sl, Inches(0.4), Inches(1.52), Inches(12.5), Inches(0.58), fill=ORANGE)
+    add_text_box(sl, "FRONTEND  (5-Tab SPA — Zero dependency HTML/CSS/JS)",
+                 Inches(0.55), Inches(1.54), Inches(5.0), Inches(0.3),
+                 size=Pt(10), bold=True, color=WHITE)
+    tabs = ["Search", "Recommendations", "Multi-Agent", "Dashboard", "Anomalies"]
+    for i, t in enumerate(tabs):
+        tx = Inches(5.7) + i * Inches(1.42)
+        add_rect(sl, tx, Inches(1.57), Inches(1.3), Inches(0.42),
+                 fill=RGBColor(0xFF, 0xFF, 0xFF), line=None)
+        add_text_box(sl, t, tx, Inches(1.57), Inches(1.3), Inches(0.42),
+                     size=Pt(9), bold=True, color=ORANGE, align=PP_ALIGN.CENTER)
+
+    # Arrow
+    add_text_box(sl, "▼  HTTP / REST", Inches(6.0), Inches(2.12),
+                 Inches(2.5), Inches(0.28), size=Pt(9), bold=True,
+                 color=ORANGE, align=PP_ALIGN.CENTER)
+
+    # ── Layer 2: FASTAPI ────────────────────────────────────────────────────
+    add_rect(sl, Inches(0.4), Inches(2.42), Inches(12.5), Inches(0.6), fill=NAVY)
+    add_text_box(sl, "FASTAPI APPLICATION  /api/v1  (9 endpoints)",
+                 Inches(0.55), Inches(2.44), Inches(4.5), Inches(0.3),
+                 size=Pt(10), bold=True, color=ORANGE)
+    routes = ["/search", "/recommendations", "/agents/analyze", "/analytics"]
+    route_colors = [NAVY_LIGHT, NAVY_LIGHT, NAVY_LIGHT, NAVY_LIGHT]
+    for i, r in enumerate(routes):
+        rx = Inches(5.0) + i * Inches(1.97)
+        add_rect(sl, rx, Inches(2.47), Inches(1.82), Inches(0.38),
+                 fill=NAVY_LIGHT, line=ORANGE, line_w=Pt(0.8))
+        add_text_box(sl, r, rx, Inches(2.47), Inches(1.82), Inches(0.38),
+                     size=Pt(9), bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+
+    # ── Layer 3: SERVICE LAYER ─────────────────────────────────────────────
+    add_text_box(sl, "▼  Routes to Services", Inches(5.8), Inches(3.04),
+                 Inches(3.0), Inches(0.24), size=Pt(8.5), bold=True,
+                 color=COL_FG, align=PP_ALIGN.CENTER)
+
+    svc_boxes = [
+        ("RAG Service\n(search)", Inches(0.4), Inches(3.3), Inches(3.0), NAVY_LIGHT),
+        ("RAG Service\n(generate+recommend)", Inches(3.55), Inches(3.3), Inches(3.0), NAVY_LIGHT),
+        ("Orchestrator\n(multi-agent)", Inches(6.7), Inches(3.3), Inches(3.0), RGBColor(0x2E, 0x4A, 0x80)),
+        ("Analytics Service\n(dashboard/anomalies)", Inches(9.85), Inches(3.3), Inches(3.05), RGBColor(0x2E, 0x4A, 0x80)),
     ]
+    for label, sx, sy, sw, bg in svc_boxes:
+        add_rect(sl, sx, sy, sw, Inches(0.65), fill=bg)
+        add_text_box(sl, label, sx, sy, sw, Inches(0.65),
+                     size=Pt(9.5), bold=True, color=WHITE, align=PP_ALIGN.CENTER)
 
-    for i, (lbl, content, bg, fg) in enumerate(layers):
-        by = Inches(1.52) + i * Inches(0.93)
-        add_rect(sl, Inches(0.4), by, Inches(12.5), Inches(0.85), fill=bg)
-        add_text_box(sl, lbl, Inches(0.55), by + Inches(0.06),
-                     Inches(3.2), Inches(0.38), size=Pt(10.5), bold=True, color=ORANGE if fg == WHITE else fg)
-        add_text_box(sl, content, Inches(3.8), by + Inches(0.06),
-                     Inches(9.0), Inches(0.72), size=Pt(10), color=fg)
+    # ── Layer 4: CORE SERVICES ─────────────────────────────────────────────
+    add_text_box(sl, "▼  Shared Core Services", Inches(5.5), Inches(3.97),
+                 Inches(3.0), Inches(0.24), size=Pt(8.5), bold=True,
+                 color=COL_FG, align=PP_ALIGN.CENTER)
 
-    # LLM box on right side
-    add_rect(sl, Inches(10.8), Inches(3.0), Inches(2.1), Inches(1.5),
-             fill=ORANGE, line=WHITE, line_w=Pt(1.5))
-    add_text_box(sl, "OpenAI\nGPT-4o-mini\nvia Gateway",
-                 Inches(10.85), Inches(3.05), Inches(2.0), Inches(1.4),
-                 size=Pt(10.5), bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+    add_rect(sl, Inches(0.4), Inches(4.23), Inches(12.5), Inches(0.62),
+             fill=RGBColor(0x18, 0x2E, 0x60))
+    core_items = [
+        ("HybridSearch\n(BM25 + RRF)", Inches(0.5)),
+        ("RiskScoring\n(4-dimension)", Inches(3.7)),
+        ("Guardrails\n(validation)", Inches(6.9)),
+        ("TokenOptimizer\n(tiktoken)", Inches(10.1)),
+    ]
+    add_text_box(sl, "CORE SERVICES LAYER",
+                 Inches(0.55), Inches(4.25), Inches(2.8), Inches(0.28),
+                 size=Pt(8.5), bold=True, color=ORANGE)
+    for label, lx in core_items:
+        add_rect(sl, lx, Inches(4.27), Inches(3.0), Inches(0.52),
+                 fill=RGBColor(0x24, 0x3D, 0x72), line=ORANGE, line_w=Pt(0.7))
+        add_text_box(sl, label, lx, Inches(4.27), Inches(3.0), Inches(0.52),
+                     size=Pt(9), color=WHITE, align=PP_ALIGN.CENTER)
+
+    # ── Layer 5: VectorStore (left) + LLM (right) ──────────────────────────
+    # Left: NumPy VectorStore
+    add_rect(sl, Inches(0.4), Inches(4.95), Inches(5.8), Inches(1.08),
+             fill=RGBColor(0x12, 0x22, 0x48), line=NAVY_LIGHT, line_w=Pt(1))
+    add_text_box(sl, "NUMPY VECTOR STORE",
+                 Inches(0.55), Inches(4.98), Inches(3.5), Inches(0.3),
+                 size=Pt(9.5), bold=True, color=ORANGE)
+    add_text_box(sl, "embeddings.npy  ·  documents.json  ·  BM25 Index\n"
+                     "all-MiniLM-L6-v2 (384-dim) · store_meta.json (dimension guard)",
+                 Inches(0.55), Inches(5.3), Inches(5.5), Inches(0.65),
+                 size=Pt(9), color=COL_FG)
+
+    # Right: OpenAI GPT-4o-mini
+    add_rect(sl, Inches(7.1), Inches(4.95), Inches(5.8), Inches(1.08),
+             fill=ORANGE, line=WHITE, line_w=Pt(1.2))
+    add_text_box(sl, "OPENAI GPT-4o-mini  (via keygateway · SSL-off)",
+                 Inches(7.25), Inches(4.98), Inches(5.5), Inches(0.3),
+                 size=Pt(9.5), bold=True, color=WHITE)
+    add_text_box(sl, "• Recommendation generation (chat.completions, max_tokens=500)\n"
+                     "• Multi-agent tool use (function calling)  ·  LLM-as-judge evaluation",
+                 Inches(7.25), Inches(5.3), Inches(5.5), Inches(0.65),
+                 size=Pt(9), color=RGBColor(0xFF, 0xE8, 0xD8))
+
+    # ── Layer 6: DATA LAYER ────────────────────────────────────────────────
+    add_rect(sl, Inches(0.4), Inches(6.15), Inches(12.5), Inches(0.65),
+             fill=RGBColor(0x0A, 0x16, 0x30))
+    add_text_box(sl, "DATA LAYER",
+                 Inches(0.55), Inches(6.18), Inches(1.8), Inches(0.28),
+                 size=Pt(9.5), bold=True, color=ORANGE)
+    add_text_box(sl,
+                 "supply_chain_data.csv (600 incidents)  →  Preprocessing (coerce/enrich)  →  "
+                 "Chunking (tiktoken)  →  Embeddings  →  VectorStore upsert",
+                 Inches(2.5), Inches(6.18), Inches(10.3), Inches(0.6),
+                 size=Pt(9.5), color=COL_FG)
 
 
 def slide_data_flow(prs):
