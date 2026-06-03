@@ -258,7 +258,7 @@ function renderAgentResults(data) {
 
   const meta = `<p class="meta-info">
     Agents: <strong>${data.agents_invoked.join(', ')}</strong> ·
-    Consolidated Risk: <strong style="color:var(--${color === 'low' ? 'success' : color === 'medium' ? 'accent' : color === 'high' ? 'warning' : 'danger'})">${pct}%</strong> ·
+    Consolidated Risk: <strong style="color:var(--${color === 'low' ? 'success' : color === 'medium' ? 'blue-500' : color === 'high' ? 'warning' : 'danger'})">${pct}%</strong> ·
     ${data.latency_ms.toFixed(0)} ms
   </p>`;
 
@@ -268,7 +268,7 @@ function renderAgentResults(data) {
     <div class="agent-card ${a.escalated ? 'escalated' : ''}">
       <div class="agent-header">
         <span class="agent-name">${a.agent_name}</span>
-        <span class="agent-score" style="color:var(--${riskColor(a.risk_score) === 'low' ? 'success' : riskColor(a.risk_score) === 'medium' ? 'accent' : riskColor(a.risk_score) === 'high' ? 'warning' : 'danger'})">
+        <span class="agent-score" style="color:var(--${riskColor(a.risk_score) === 'low' ? 'success' : riskColor(a.risk_score) === 'medium' ? 'blue-500' : riskColor(a.risk_score) === 'high' ? 'warning' : 'danger'})">
           Risk: ${Math.round(a.risk_score * 100)}%
         </span>
       </div>
