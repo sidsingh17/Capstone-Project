@@ -255,7 +255,7 @@ def slide_architecture(prs):
     """
     sl = prs_slide(prs)
     page_header(sl, "System Architecture",
-                "Layered microservice design (TECHNICAL_DOCUMENT.md §2) — each layer independently replaceable")
+                "Layered microservice design — each layer independently replaceable")
 
     COL_FG = RGBColor(0xC8, 0xD3, 0xE8)
 
