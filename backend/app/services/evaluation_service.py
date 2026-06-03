@@ -71,7 +71,7 @@ FEEDBACK: [2-3 sentences of overall feedback]"""
 
         response = self.client.chat.completions.create(
             model=self.settings.LLM_MODEL,
-            max_tokens=800,
+            max_tokens=self.settings.MAX_TOKENS,
             messages=[
                 {"role": "system", "content": _JUDGE_SYSTEM},
                 {"role": "user", "content": prompt},
