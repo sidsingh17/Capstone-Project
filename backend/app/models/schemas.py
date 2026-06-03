@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List, Dict, Any
 from enum import Enum
 from datetime import datetime
@@ -154,6 +154,13 @@ class AgentResult(BaseModel):
     recommendations: List[str]
     escalated: bool = False
     escalation_reason: Optional[str] = None
+
+    @field_validator("escalated", mode="before")
+    @classmethod
+    def coerce_escalated(cls, v):
+        if v is None:
+            return False
+        return bool(v)
 
 
 class OrchestratorResponse(BaseModel):
