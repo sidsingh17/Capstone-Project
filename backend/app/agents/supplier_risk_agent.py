@@ -90,7 +90,7 @@ def _parse_agent_result(agent_name: str, agent_type: str, text: str) -> AgentRes
     recommendations = _extract_bullets(text, "RECOMMENDATIONS")
 
     escalate_match = re.search(r"ESCALATE:\s*(YES|NO)", text, re.IGNORECASE)
-    escalated = escalate_match and escalate_match.group(1).upper() == "YES"
+    escalated = bool(escalate_match and escalate_match.group(1).upper() == "YES")
     escalation_reason = "Supplier risk score exceeds threshold (>0.7)" if escalated else None
 
     return AgentResult(
