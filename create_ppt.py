@@ -804,9 +804,8 @@ def build_presentation():
     slide_evaluation(prs);   print("  9. Evaluation Framework")
     slide_fallbacks(prs);    print(" 10. Fallback Mechanisms")
     slide_dashboard(prs);    print(" 11. Frontend Dashboard")
-    slide_demo_flow(prs);    print(" 12. Demo Flow")
-    slide_results(prs);      print(" 13. Results & Performance")
-    slide_thankyou(prs);     print(" 14. Thank You / Q&A")
+    slide_results(prs);      print(" 12. Results & Performance")
+    slide_thankyou(prs);     print(" 13. Thank You / Q&A")
 
     out = Path(__file__).parent / "SC_Risk_Intelligence_PPT.pptx"
     prs.save(str(out))
