@@ -53,44 +53,44 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   HEADER — White with blue accent line
+   HEADER — Dark theme with blue accent line
    ═══════════════════════════════════════════════ */
 .header {
-  background: #ffffff;
-  border-bottom: 2px solid var(--blue-600);
-  box-shadow: 0 2px 12px rgba(37,99,235,.1);
+  background: #0f172a;
+  border-bottom: 3px solid var(--blue-600);
+  box-shadow: 0 2px 16px rgba(0,0,0,.4);
   position: sticky; top: 0; z-index: 100;
 }
 .header-inner {
   max-width: 1280px; margin: 0 auto;
   padding: 0 24px;
   display: flex; align-items: center; gap: 24px;
-  height: 62px;
+  height: 64px;
 }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.logo-icon { font-size: 22px; color: var(--blue-600); }
-.logo-text { font-size: 15px; font-weight: 600; white-space: nowrap; color: var(--blue-900); }
-.logo-text strong { color: var(--blue-600); font-weight: 800; }
+.logo-icon { font-size: 22px; color: var(--blue-400); }
+.logo-text { font-size: 15px; font-weight: 600; white-space: nowrap; color: #e2e8f0; }
+.logo-text strong { color: var(--blue-400); font-weight: 800; }
 
 .nav-tabs { display: flex; gap: 4px; flex: 1; }
 .tab {
   padding: 7px 14px; border: none; border-radius: 7px;
-  background: transparent; color: var(--muted); cursor: pointer;
+  background: transparent; color: #94a3b8; cursor: pointer;
   font-size: 13px; font-weight: 500; transition: all .15s;
 }
-.tab:hover { background: var(--blue-50); color: var(--blue-700); }
+.tab:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
 .tab.active {
   background: var(--blue-600); color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+  box-shadow: 0 2px 10px rgba(37,99,235,.5);
 }
 
 .health-badge {
   display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--muted); white-space: nowrap;
+  font-size: 12px; color: #64748b; white-space: nowrap;
 }
 .health-badge .dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--muted-light);
+  width: 8px; height: 8px; border-radius: 50%; background: #475569;
 }
 .health-badge.ok .dot  { background: var(--success); }
 .health-badge.ok       { color: var(--success); }
